@@ -1,6 +1,8 @@
 #include "ValorAuto.h"
 
-ValorAuto::ValorAuto(Drivetrain *_drivetrain) : drivetrain(_drivetrain)
+ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter) : 
+    drivetrain(_drivetrain), 
+    shooter(_shooter)
 {    
     // See: https://github.com/wpilibsuite/allwpilib/blob/v2022.1.1/wpilibcExamples/src/main/cpp/examples/SwerveControllerCommand/cpp/RobotContainer.cpp
 
@@ -38,6 +40,8 @@ frc::Pose2d bugsAlt = frc::Pose2d(1.234_m, -0.7_m, frc::Rotation2d(270_deg));
 frc::Pose2d daffyAlt = frc::Pose2d(.057_m, -2.0_m, frc::Rotation2d(-140_deg));
 frc::Pose2d porkyAlt = frc::Pose2d(.19_m, -6_m, frc::Rotation2d(-60_deg));
 frc::Pose2d shootAlt = frc::Pose2d(0_m,-2.626_m, frc::Rotation2d(-180_deg));
+
+frc2::InstantCommand manualTurret = frc2::InstantCommand( [&] { shooter->state.turretState = Shooter::TurretState::TURRET_MANUAL; } );
 
     auto moveBugs = frc::TrajectoryGenerator::GenerateTrajectory(
         frc::Pose2d(0_m, 0_m, frc::Rotation2d(0_deg)),
@@ -218,12 +222,18 @@ frc::Pose2d shootAlt = frc::Pose2d(0_m,-2.626_m, frc::Rotation2d(-180_deg));
     cmd_move_move2,
     cmd_move_move3); */
 
-     frc2::SequentialCommandGroup *shoot4New = new frc2::SequentialCommandGroup();
+    frc2::SequentialCommandGroup *shoot4New = new frc2::SequentialCommandGroup();
     shoot4New->AddCommands
     (cmd_move_moveBugs,
     frc2::WaitCommand((units::second_t)1.5),
     cmd_move_movePorky,
     cmd_move_moveShoot);
+
+    frc2::SequentialCommandGroup *motorTest = new frc2::SequentialCommandGroup();
+    shoot4New->AddCommands
+    (manualTurret,
+    frc2::WaitCommand((units::second_t)1.5),
+    cmd_move_moveBugs);
 
     frc2::SequentialCommandGroup *shoot5 = new frc2::SequentialCommandGroup();
     shoot5->AddCommands
@@ -246,7 +256,6 @@ frc::Pose2d shootAlt = frc::Pose2d(0_m,-2.626_m, frc::Rotation2d(-180_deg));
     frc2::WaitCommand((units::second_t)1.5),
     cmd_move_moveShootAlt); 
 
-
 /*
     frc2::SequentialCommandGroup *leaveTarmac = new frc2::SequentialCommandGroup();
     leaveTarmac->AddCommands
@@ -256,13 +265,10 @@ frc::Pose2d shootAlt = frc::Pose2d(0_m,-2.626_m, frc::Rotation2d(-180_deg));
     m_chooser.AddOption("4 ball auto", shoot4);
 */
     m_chooser.SetDefaultOption("4 ball auto new", shoot4New);
+    m_chooser.AddOption("5 ball auto", shoot5);
+    m_chooser.AddOption("5 ball auto remove Taz", shoot5RemoveTaz);
+    m_chooser.AddOption("motor test", motorTest);
     frc::SmartDashboard::PutData(&m_chooser);
-    m_chooser.SetDefaultOption("5 ball auto", shoot5);
-    frc::SmartDashboard::PutData(&m_chooser);
-    m_chooser.SetDefaultOption("5 ball auto remove Taz", shoot5RemoveTaz);
-    frc::SmartDashboard::PutData(&m_chooser);
-
-
 }
 
 frc2::Command* ValorAuto::getCurrentAuto() {
