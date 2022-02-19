@@ -93,6 +93,8 @@ public:
           double flywheelTarget; //vel
           int hoodTarget; //pos
 
+          int turretHomePosition;
+
           double flywheelLow;
           double flywheelHigh;
 

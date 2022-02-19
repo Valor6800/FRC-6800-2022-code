@@ -35,6 +35,8 @@ void Shooter::init()
     table->PutNumber("Flywheel Default Value", ShooterConstants::flywheelDefaultValue);
     table->PutNumber("Hood Top Position", ShooterConstants::hoodTop);
     table->PutNumber("Hood Bottom Position", ShooterConstants::hoodBottom);
+    // -1 for left home position, 0 for center home position, 1 for fight home position
+    table->PutNumber("Turret Home Position", 0);
     
     table->PutBoolean("Use line of best fit", false);
 
@@ -207,6 +209,8 @@ void Shooter::analyzeDashboard()
     }
     state.lastTurretState = state.turretState;
 
+    state.turretHomePosition = table->GetNumber("Turret Home Position", 0);
+
     table->PutNumber("Hood degrees", hoodEncoder.GetPosition());
     table->PutNumber("Turret pos", turretEncoder.GetPosition());
 
@@ -245,7 +249,18 @@ void Shooter::assignOutputs()
 
     //HOME
     else if(state.turretState == TurretState::TURRET_HOME){
-        state.turretTarget = ShooterConstants::homePosition;
+        if(state.turretHomePosition == -1){
+            state.turretTarget = ShooterConstants::homePosition;
+        }
+        else if(state.turretHomePosition == 0){
+            state.turretTarget = ShooterConstants::homePosition;
+        }
+        else if(state.turretHomePosition == 1){
+            state.turretTarget = ShooterConstants::turretHomeRightPosition;
+        }
+        else{
+            state.turretTarget = ShooterConstants::homePosition;
+        }
         useSmartMotion = true;
     }
 

@@ -85,6 +85,7 @@ namespace SwerveConstants {
 
     constexpr static double WHEEL_DIAMETER_M = 0.1016;
     constexpr static double WHEEL_CIRCUMFERENCE_M = WHEEL_DIAMETER_M * M_PI;
+    
 
     constexpr static double MOTOR_FREE_SPEED = 6380.0;
 
@@ -176,6 +177,7 @@ namespace ShooterConstants{
     constexpr static double pSoftDeadband = 0.1;
 
     constexpr static double homePosition = 0;
+    constexpr static double turretHomeRightPosition = 30;
 
     constexpr static double falconMaxRPM = 6380;
     constexpr static double falconGearRatio = 1;
