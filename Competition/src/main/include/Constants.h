@@ -184,7 +184,7 @@ namespace ShooterConstants{
 
     // Encoder ticks off of center
     // 192 (gear ration) * angle ratio (ex. 1/2 for 180 deg)
-    constexpr static double turretLimitLeft = 40; //40
+    constexpr static double turretLimitLeft = 180; //40
     constexpr static double turretLimitRight = 0;
 
     constexpr static double hubX = 0;
