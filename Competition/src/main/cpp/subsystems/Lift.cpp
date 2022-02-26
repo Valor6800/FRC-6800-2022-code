@@ -87,16 +87,19 @@ void Lift::assessInputs()
     state.dPadDownPressed = operatorController->GetPOV() == OIConstants::dpadDown;
     state.dPadUpPressed = operatorController->GetPOV() == OIConstants::dpadUp;
 
-    if (state.dPadLeftPressed && leadMainMotor.GetSelectedSensorPosition() > LiftConstants::rotateNoLowerThreshold)
+    if (leadMainMotor.GetSelectedSensorPosition() < LiftConstants::rotateNoLowerThreshold) {
+        state.liftstateRotate = LiftRotateState::LIFT_ROTATE_TO_IN_POSITION;
+    }
+    else if (state.dPadLeftPressed && leadMainMotor.GetSelectedSensorPosition())
     {
         state.liftstateRotate = LiftRotateState::LIFT_ROTATE_EXTEND;
     }
-    else if (state.dPadRightPressed && leadMainMotor.GetSelectedSensorPosition() > LiftConstants::rotateNoLowerThreshold)
+    else if (state.dPadRightPressed && leadMainMotor.GetSelectedSensorPosition())
     {
         state.liftstateRotate = LiftRotateState::LIFT_ROTATE_RETRACT;
     }
-    else if (state.dPadDownPressed && leadMainMotor.GetSelectedSensorPosition() > LiftConstants::rotateNoLowerThreshold) {
-        state.liftstateRotate = LiftRotateState::LIFT_ROTATE_TOPOSITION;
+    else if (state.dPadDownPressed && leadMainMotor.GetSelectedSensorPosition()) {
+        state.liftstateRotate = LiftRotateState::LIFT_ROTATE_TO_FIRST_POSITION;
     }
     else
     {
@@ -108,7 +111,7 @@ void Lift::assessInputs()
         state.liftstateMain = LiftMainState::LIFT_MAIN_ENABLE;
     }
     else if (state.dPadUpPressed) {
-        state.liftstateMain = LiftMainState::LIFT_MAIN_TOPOSITION;
+        state.liftstateMain = LiftMainState::LIFT_MAIN_TO_FIRST_POSITION;
     }
     else
     {
@@ -129,10 +132,12 @@ void Lift::analyzeDashboard()
 
 void Lift::assignOutputs()
 {
-
     if (state.liftstateRotate == LiftRotateState::LIFT_ROTATE_DISABLED)
     {
         rotateMotor.Set(0);
+    }
+    else if (state.liftstateRotate == LiftRotateState::LIFT_ROTATE_TO_IN_POSITION) {
+        rotateMotorPidController.SetReference(LiftConstants::ROTATE_IN_POSITION, rev::ControlType::kSmartMotion);
     }
     else if (state.liftstateRotate == LiftRotateState::LIFT_ROTATE_EXTEND)
     {
@@ -142,7 +147,7 @@ void Lift::assignOutputs()
     {
         rotateMotor.Set(LiftConstants::DEFAULT_RETRACT_SPD);
     }
-    else if (state.liftstateRotate == LiftRotateState::LIFT_ROTATE_TOPOSITION) {
+    else if (state.liftstateRotate == LiftRotateState::LIFT_ROTATE_TO_FIRST_POSITION) {
         rotateMotorPidController.SetReference(state.desiredRotatePos, rev::ControlType::kSmartMotion);
     }
 
@@ -157,7 +162,7 @@ void Lift::assignOutputs()
             leadMainMotor.Set(state.rightStickY * LiftConstants::DEFAULT_MAIN_RETRACT_SPD);
         }
     }
-    else if (state.liftstateMain == LiftMainState::LIFT_MAIN_TOPOSITION) {
+    else if (state.liftstateMain == LiftMainState::LIFT_MAIN_TO_FIRST_POSITION) {
         leadMainMotor.Set(ControlMode::MotionMagic, state.desiredMainPos);
 
     }

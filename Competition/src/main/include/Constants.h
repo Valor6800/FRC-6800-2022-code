@@ -233,6 +233,7 @@ namespace LiftConstants{
     constexpr static double MAIN_DOWN_POSITION = 125;
 
     constexpr static int ROTATE_FIRST_POSITION = 40;
+    constexpr static int ROTATE_IN_POSITION = 0;
 
     constexpr static double rotateForwardLimit = 40;
     constexpr static double rotateReverseLimit = 0;

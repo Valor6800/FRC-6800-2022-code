@@ -36,13 +36,14 @@ public:
         LIFT_ROTATE_DISABLED,
         LIFT_ROTATE_EXTEND,
         LIFT_ROTATE_RETRACT,
-        LIFT_ROTATE_TOPOSITION
+        LIFT_ROTATE_TO_FIRST_POSITION,
+        LIFT_ROTATE_TO_IN_POSITION
     };
         
     enum LiftMainState {
         LIFT_MAIN_DISABLED,
         LIFT_MAIN_ENABLE,
-        LIFT_MAIN_TOPOSITION
+        LIFT_MAIN_TO_FIRST_POSITION
     };
 
 
