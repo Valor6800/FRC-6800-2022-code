@@ -158,8 +158,10 @@ void Lift::assignOutputs()
         }
     }
     else if (state.liftstateMain == LiftMainState::LIFT_MAIN_TOPOSITION) {
+        if (leadMainMotor.GetSelectedSensorPosition() >= state.desiredMainPos){
+            rotateMotorPidController.SetReference(state.desiredRotatePos, rev::ControlType::kSmartMotion);
+        }
         leadMainMotor.Set(ControlMode::MotionMagic, state.desiredMainPos);
-
     }
 }
 
