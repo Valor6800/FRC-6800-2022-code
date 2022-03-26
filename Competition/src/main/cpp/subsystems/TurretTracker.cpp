@@ -49,19 +49,27 @@ void TurretTracker::assignOutputs() {
         state.cachedHeading = drivetrain->getPose_m().Rotation().Degrees().to<double>();
         state.cachedX = drivetrain->getPose_m().X().to<double>();
         state.cachedY = drivetrain->getPose_m().Y().to<double>();
+        state.cachedDist = shooter->state.distanceToHub;
         state.cachedTurretPos = shooter->turretEncoder.GetPosition();
     }
     else {
-        double changeHeading = drivetrain->getPose_m().Rotation().Degrees().to<double>() - state.cachedHeading;
-        if (changeHeading > 180){
-            changeHeading -= 180;
-        }
-        if (changeHeading < -180){
-            changeHeading += 180;
-        }
+        double oldAngleToHub = state.cachedHeading - state.cachedTx;
+        double oldXToHub = state.cachedDist * cos(oldAngleToHub * MathConstants::toRadians);
+        double oldYToHub = state.cachedDist * sin(oldAngleToHub * MathConstants::toRadians);
 
-        state.target -= (changeHeading);
-        //state.target = shooter->turretEncoder.GetPosition();
+        double xDiff = drivetrain->getPose_m().X().to<double>() - state.cachedX;
+        double yDiff = drivetrain->getPose_m().Y().to<double>() - state.cachedY;
+\
+        double currentX = oldXToHub + xDiff;
+        double currentY = oldYToHub + yDiff;
+
+        // double currentX = xDiff + state.cachedX;
+        // double currentY = yDiff + state.cachedY;
+
+        double targetThetaRad = atan2(currentY, currentX);
+        double relativeAngle = targetThetaRad - drivetrain->getPose_m().Rotation().Degrees().to<double>();
+        double rot = relativeAngle / (2 * M_PI);
+        state.target = rot * 360;
     }
 
     if (state.target < -90) {

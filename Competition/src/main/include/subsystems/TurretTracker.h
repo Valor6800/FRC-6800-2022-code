@@ -39,6 +39,7 @@ public:
 
         double cachedX;
         double cachedY;
+        double cachedDist;
 
         double cachedVX;
         double cachedVY;
