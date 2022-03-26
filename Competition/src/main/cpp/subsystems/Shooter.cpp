@@ -134,7 +134,7 @@ void Shooter::resetState(){
 
     state.flywheelTarget = 0;
     state.hoodTarget = 0;
-    state.distanceToHub = 3;
+    state.distanceToHub = 1;
     state.currentBall = 0;
 }
 
@@ -164,7 +164,7 @@ void Shooter::assessInputs()
     state.backButton = operatorController->GetBackButtonPressed(); 
     state.rightBumper = operatorController->GetRightBumper();
     state.leftStickX = -operatorController->GetLeftX();
-    state.aButton = operatorController->GetAButtonPressed();
+    state.aButton = operatorController->GetAButton();
     state.yButton = operatorController->GetYButton();
     state.xButton = operatorController->GetXButton();
     state.bButton = operatorController->GetBButtonPressed();
@@ -285,7 +285,7 @@ void Shooter::analyzeDashboard()
     table->PutNumber("Hood degrees", hoodEncoder.GetPosition());
     table->PutNumber("Turret pos", turretEncoder.GetPosition());
 
-    table->PutNumber("Turret target", state.turretTarget);
+    table->PutNumber("Turret target", state.desiredTurretTarget);
 
     table->PutNumber("left stick x", state.leftStickX);
 
@@ -365,6 +365,7 @@ void Shooter::assignOutputs()
     }
     //PRIMED
     else if (state.turretState == TurretState::TURRET_TRACK){
+        state.turretTarget = state.desiredTurretTarget;
         turretPidController.SetReference(state.turretTarget, rev::ControlType::kSmartMotion);
     }
     //DEFAULT
@@ -405,7 +406,7 @@ void Shooter::assignOutputs()
         //setLimelight(0);
         //setPIDProfile(0);
     }
-    else if(state.flywheelState == FlywheelState::FLYWHEEL_TRACK){
+    else if(state.flywheelState == FlywheelState::FLYWHEEL_TRACK){ 
         state.flywheelTarget = ShooterConstants::aPower *(state.distanceToHub * state.distanceToHub) + ShooterConstants::bPower * state.distanceToHub + state.powerC ; //commented out for testing PID
         //state.flywheelTarget = state.flywheelHigh;
         //setLimelight(0);
@@ -497,5 +498,5 @@ double Shooter::convertTargetTics(double originalTarget, double realTicsPerRev){
 }
 
 void Shooter::assignTurret(double tg) {
-    state.turretTarget = tg;
+    state.desiredTurretTarget = tg;
 }

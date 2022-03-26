@@ -15,6 +15,7 @@ TurretTracker::TurretTracker() : ValorSubsystem()
 
 void TurretTracker::init() {
     initTable("TurretTracker");
+    limeTable = nt::NetworkTableInstance::GetDefault().GetTable("limelight");
 }
 
 void TurretTracker::setDrivetrain(Drivetrain *dt){
@@ -38,10 +39,10 @@ void TurretTracker::assignOutputs() {
     // state.cachedVY = drivetrain->getKinematics().ToChassisSpeeds().vy.to<double>();
     // state.cachedVT = drivetrain->getKinematics().ToChassisSpeeds().omega.to<double>();
 
-    double tv = shooter->state.tv;
+    double tv = limeTable->GetNumber("tv", 0.0);
 
     if (tv == 1) {
-        state.cachedTx = shooter->state.tx;
+        state.cachedTx = limeTable->GetNumber("tx", 0.0);
         // 0.75 = limeligh KP
         state.target = (-state.cachedTx * 0.75) + shooter->turretEncoder.GetPosition();
         
@@ -51,9 +52,16 @@ void TurretTracker::assignOutputs() {
         state.cachedTurretPos = shooter->turretEncoder.GetPosition();
     }
     else {
-        // double changeHeading = drivetrain->getPose_m().Rotation().Degrees().to<double>() - state.cachedHeading;
-        // state.target -= changeHeading;
-        state.target = shooter->turretEncoder.GetPosition();
+        double changeHeading = drivetrain->getPose_m().Rotation().Degrees().to<double>() - state.cachedHeading;
+        if (changeHeading > 180){
+            changeHeading -= 180;
+        }
+        if (changeHeading < -180){
+            changeHeading += 180;
+        }
+
+        state.target -= (changeHeading);
+        //state.target = shooter->turretEncoder.GetPosition();
     }
 
     if (state.target < -90) {

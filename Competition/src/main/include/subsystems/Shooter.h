@@ -107,6 +107,7 @@ public:
 
           double turretOutput; //%
           double turretTarget; //pos
+          double desiredTurretTarget;
 
           double flywheelTarget; //vel
           double hoodTarget; //pos

@@ -50,7 +50,7 @@ public:
 
 
 private:
-
+    std::shared_ptr<nt::NetworkTable> limeTable;
     Drivetrain *drivetrain;
     Shooter *shooter;
 };
