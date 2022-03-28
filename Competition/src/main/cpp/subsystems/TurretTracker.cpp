@@ -59,7 +59,7 @@ void TurretTracker::assignOutputs() {
 
         double xDiff = drivetrain->getPose_m().X().to<double>() - state.cachedX;
         double yDiff = drivetrain->getPose_m().Y().to<double>() - state.cachedY;
-\
+
         double currentX = oldXToHub + xDiff;
         double currentY = oldYToHub + yDiff;
 
