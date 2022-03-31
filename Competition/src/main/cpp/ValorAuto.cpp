@@ -62,23 +62,26 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     frc::Pose2d marvinRed = frc::Pose2d(units::meter_t(3.7), units::meter_t(7.2), frc::Rotation2d(137_deg));
     frc::Pose2d marvinBlue = frc::Pose2d(units::meter_t(4.5), units::meter_t(6.4), frc::Rotation2d(137_deg));
 
-    frc::Pose2d marvinShootRed = frc::Pose2d(units::meter_t(5), units::meter_t(7.5), frc::Rotation2d(27_deg));
+    frc::Pose2d marvinShootRed = frc::Pose2d(units::meter_t(5.2), units::meter_t(7.5), frc::Rotation2d(27_deg));
     frc::Pose2d marvinShootBlue = frc::Pose2d(units::meter_t(5.2), units::meter_t(6.8), frc::Rotation2d(27_deg));
 
     frc::Pose2d tasRed = frc::Pose2d(units::meter_t(6.069), units::meter_t(7.8), frc::Rotation2d(30_deg));
     frc::Pose2d tasBlue = frc::Pose2d(units::meter_t(5.969), units::meter_t(7.26), frc::Rotation2d(30_deg));
 
-    frc::Pose2d hangarSpotRed = frc::Pose2d(units::meter_t(1), units::meter_t(7.5), frc::Rotation2d(180_deg)); // was originally 5
-    frc::Pose2d hangarSpotBlue = frc::Pose2d(units::meter_t(1), units::meter_t(7.5), frc::Rotation2d(180_deg)); // was originally 5
+    frc::Pose2d hangarSpotRed = frc::Pose2d(units::meter_t(5), units::meter_t(7.5), frc::Rotation2d(180_deg)); // was originally 5
+    frc::Pose2d hangarSpotBlue = frc::Pose2d(units::meter_t(5), units::meter_t(7.5), frc::Rotation2d(180_deg)); // was originally 5
 
     frc::Translation2d speedyConstrainRed = frc::Translation2d(.75_m, 2.5_m); //1.2_m in case we need to push it more towards wall
     frc::Translation2d speedyConstrainBlue = frc::Translation2d(.75_m, 2.5_m); //1.2_m in case we need to push it more towards wall
 
-    frc::Pose2d speedyRed = frc::Pose2d(3.45_m, 2.45_m, frc::Rotation2d(0_deg)); // was originally 5
-    frc::Pose2d speedyBlue = frc::Pose2d(3.45_m, 2.25_m, frc::Rotation2d(0_deg)); // was originally 5
+    frc::Pose2d speedyRed = frc::Pose2d(3.45_m, 2.15_m, frc::Rotation2d(-60_deg)); //originally 0
+    frc::Pose2d speedyBlue = frc::Pose2d(3.45_m, 2.15_m, frc::Rotation2d(-60_deg)); //originally 0
+
+    frc::Pose2d trenchEndRed = frc::Pose2d(3.75_m, 2.15_m, frc::Rotation2d(0_deg)); 
+    frc::Pose2d trenchEndBlue = frc::Pose2d(3.75_m, 2.15_m, frc::Rotation2d(0_deg));
 
     //would have to increase the angle of this spot.
-    frc::Pose2d trenchSpotRed = frc::Pose2d(units::meter_t(3.7), units::meter_t(7.2), frc::Rotation2d(-30_deg));
+    frc::Pose2d trenchSpotRed = frc::Pose2d(units::meter_t(3.7), units::meter_t(7.2), frc::Rotation2d(-30_deg)); //can make 180 to shoot into hangar
     frc::Pose2d trenchSpotBlue = frc::Pose2d(units::meter_t(4.5), units::meter_t(6.4), frc::Rotation2d(-30_deg));
     
 
@@ -108,6 +111,10 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
 
     frc2::InstantCommand cmd_turretHomeMid = frc2::InstantCommand( [&] {
         shooter->state.turretState = Shooter::TurretState::TURRET_HOME_MID;
+    } );
+
+    frc2::InstantCommand cmd_turretHomeLeft = frc2::InstantCommand( [&] {
+        shooter->state.turretState = Shooter::TurretState::TURRET_HOME_LEFT;
     } );
 
     frc2::InstantCommand cmd_turretDisable = frc2::InstantCommand( [&] {
@@ -234,6 +241,18 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         hangarSpotRed,
         {speedyConstrainRed},
         speedyRed,
+        reverseConfig);
+    
+    auto moveSpeedyFromTasRed = frc::TrajectoryGenerator::GenerateTrajectory(
+        tasRed,
+        {},
+        speedyRed,
+        reverseConfig);
+
+    auto moveEndFromSpeedyRed = frc::TrajectoryGenerator::GenerateTrajectory(
+        speedyRed,
+        {},
+        trenchEndRed,
         reverseConfig);
     
     auto moveTrenchRed = frc::TrajectoryGenerator::GenerateTrajectory(
@@ -452,6 +471,27 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         [this] (auto states) { drivetrain->setModuleStates(states); },
         {drivetrain}
     );
+
+    frc2::SwerveControllerCommand<4> cmd_move_moveSpeedyFromTasRed(
+        moveSpeedyFromTasRed,
+        [&] () { return drivetrain->getPose_m(); },
+        drivetrain->getKinematics(),
+        frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
+        frc2::PIDController(DriveConstants::KPY, DriveConstants::KIY, DriveConstants::KDY),
+        thetaController,
+        [this] (auto states) { drivetrain->setModuleStates(states); },
+        {drivetrain}
+    );
+        frc2::SwerveControllerCommand<4> cmd_move_moveEndFromSpeedy(
+        moveEndFromSpeedyRed,
+        [&] () { return drivetrain->getPose_m(); },
+        drivetrain->getKinematics(),
+        frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
+        frc2::PIDController(DriveConstants::KPY, DriveConstants::KIY, DriveConstants::KDY),
+        thetaController,
+        [this] (auto states) { drivetrain->setModuleStates(states); },
+        {drivetrain}
+    );
     frc2::SwerveControllerCommand<4> cmd_move_moveTrenchRed(
         moveTrenchRed,
         [&] () { return drivetrain->getPose_m(); },
@@ -627,7 +667,7 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     cmd_intakeAuto,
     cmd_move_moveTasRed,
     cmd_move_moveHangarRed,
-    cmd_intakeShoot,
+    cmd_intakeShoot, //why shooting instead of "outaking"
     frc2::WaitCommand((units::second_t).25),
     cmd_intakeAuto,
     cmd_move_moveSpeedyRed,
@@ -640,7 +680,7 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
 
 
 
-    m_chooser.AddOption("RED 2 ball auto alt", shoot2Red);
+    m_chooser.AddOption("RED 2 ball auto", shoot2Red);
     m_chooser.AddOption("RED 2 ball 2 defensive", shoot2RedAlt);
     
 
