@@ -12,6 +12,10 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
 
     config.SetKinematics(drivetrain->getKinematics());
 
+    frc::TrajectoryConfig slowConfig(units::velocity::meters_per_second_t{1.0},
+                                 units::acceleration::meters_per_second_squared_t{1.0});
+    slowConfig.SetKinematics(drivetrain->getKinematics());
+
     frc::TrajectoryConfig reverseConfig(units::velocity::meters_per_second_t{SwerveConstants::AUTO_MAX_SPEED_MPS},
                                     units::acceleration::meters_per_second_squared_t{SwerveConstants::AUTO_MAX_ACCEL_MPSS});
 
@@ -163,6 +167,13 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         {},
         predaffyRed,
         config);
+    
+    auto movePreDaffyFromBugsRed = frc::TrajectoryGenerator::GenerateTrajectory(
+        bugsRed,
+        {},
+        predaffyRed,
+        reverseConfig);
+
     auto movePreDaffyBlue = frc::TrajectoryGenerator::GenerateTrajectory(
         backBugsBlue,
         {},
@@ -174,6 +185,13 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         {},
         daffyRed,
         config);
+
+    auto moveDaffyFromPredaffyRedTest = frc::TrajectoryGenerator::GenerateTrajectory(
+        predaffyRed,
+        {},
+        daffyRed,
+        slowConfig);
+
     auto moveDaffyFromPredaffyBlue = frc::TrajectoryGenerator::GenerateTrajectory(
         predaffyBlue,
         {},
@@ -324,6 +342,18 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         [this] (auto states) { drivetrain->setModuleStates(states); },
         {drivetrain}
     );
+
+    frc2::SwerveControllerCommand<4> cmd_move_movePreDaffyFromBugsRed(
+        movePreDaffyRed,
+        [&] () { return drivetrain->getPose_m(); },
+        drivetrain->getKinematics(),
+        frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
+        frc2::PIDController(DriveConstants::KPY, DriveConstants::KIY, DriveConstants::KDY),
+        thetaController,
+        [this] (auto states) { drivetrain->setModuleStates(states); },
+        {drivetrain}
+    );
+
     frc2::SwerveControllerCommand<4> cmd_move_movePreDaffyBlue(
         movePreDaffyBlue,
         [&] () { return drivetrain->getPose_m(); },
@@ -345,6 +375,18 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         [this] (auto states) { drivetrain->setModuleStates(states); },
         {drivetrain}
     );
+
+    frc2::SwerveControllerCommand<4> cmd_move_moveDaffyFromPredaffyRedTest(
+        moveDaffyFromPredaffyRedTest,
+        [&] () { return drivetrain->getPose_m(); },
+        drivetrain->getKinematics(),
+        frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
+        frc2::PIDController(DriveConstants::KPY, DriveConstants::KIY, DriveConstants::KDY),
+        thetaController,
+        [this] (auto states) { drivetrain->setModuleStates(states); },
+        {drivetrain}
+    );
+
     frc2::SwerveControllerCommand<4> cmd_move_moveDaffyFromPredaffyBlue(
         moveDaffyFromPredaffyBlue,
         [&] () { return drivetrain->getPose_m(); },
@@ -596,6 +638,34 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     frc2::WaitCommand((units::second_t).225),
     cmd_intakeShoot
     );
+
+frc2::SequentialCommandGroup *shoot3RedAlt = new frc2::SequentialCommandGroup();
+    shoot3RedAlt->AddCommands
+    (cmd_setOdometryRed,
+    cmd_turretHomeLeft,
+    cmd_shooterAuto,
+    cmd_intakeAuto,
+    cmd_move_moveBugsRed,
+    cmd_move_movePreDaffyFromBugsRed,
+    cmd_turretTrack,
+    frc2::WaitCommand((units::second_t).125),
+    cmd_intakeShoot,
+    cmd_move_moveDaffyFromPredaffyRedTest,
+    frc2::WaitCommand((units::second_t).35),
+    cmd_turretDisable,
+    cmd_intakeDisable
+    // cmd_intakeAuto,
+    // cmd_move_movePorkyFromDaffyRed,
+    // cmd_move_moveStepBackRed,
+    // cmd_intakeAuto,
+    // frc2::WaitCommand((units::second_t).5),
+    // cmd_turretHomeMid,
+    // cmd_move_moveShootRed,
+    // cmd_turretTrack, // if we lower the angle to 50 we could potentially cut tracking / lower time
+    // frc2::WaitCommand((units::second_t).225),
+    // cmd_intakeShoot
+    );
+
     frc2::SequentialCommandGroup *shoot5Blue = new frc2::SequentialCommandGroup();
     shoot5Blue->AddCommands
     (cmd_setOdometryBlue,
@@ -685,6 +755,7 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     
 
     m_chooser.AddOption("RED 3 ball auto", shoot3Red);
+    m_chooser.AddOption("RED 3 ball TESTING", shoot3Red);
     m_chooser.AddOption("RED 5 ball auto", shoot5Red);
 
     m_chooser.AddOption("BLUE 3 ball auto", shoot3Blue);
