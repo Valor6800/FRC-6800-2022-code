@@ -135,6 +135,8 @@ namespace ShooterConstants{
     constexpr static double limelightAngle = 50;
     constexpr static double hubHeight = 2.64;
     constexpr static double limelightHeight = .6075;
+
+    const static double jMultiplier = .4;
     
     constexpr static double flywheelKP1 = 0.088; //1
     constexpr static double flywheelKI1 = 0;

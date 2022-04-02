@@ -12,7 +12,6 @@
 #include "Drivetrain.h"
 #include "Shooter.h"
 
-
 #ifndef TURRETTRACKER_H
 #define TURRETTRACKER_H
 
@@ -28,6 +27,8 @@ public:
     void assessInputs();
     void analyzeDashboard();
     void assignOutputs();
+
+    double tMinusJ(double robotHeading, double turretPos, double jx, double jy);
 
     struct x
     {
@@ -45,6 +46,8 @@ public:
         double cachedVT;
 
         double cachedTurretPos;
+
+        double jMultiplier;
 
     } state;
 
