@@ -135,6 +135,8 @@ namespace ShooterConstants{
     constexpr static double limelightAngle = 50;
     constexpr static double hubHeight = 2.64;
     constexpr static double limelightHeight = .6075;
+
+    const static double jMultiplier = .4;
     
     constexpr static double flywheelKP1 = 0.088; //1
     constexpr static double flywheelKI1 = 0;
@@ -241,7 +243,7 @@ namespace FeederConstants{
     constexpr static double DEFAULT_FEEDER_SPEED_REVERSE = -1.0;
 
     constexpr static int CACHE_SIZE = 20;
-    constexpr static double JAM_CURRENT = 30;
+    constexpr static double JAM_CURRENT = 20;
 }
 
 namespace MathConstants{

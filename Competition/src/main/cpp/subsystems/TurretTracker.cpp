@@ -16,6 +16,8 @@ TurretTracker::TurretTracker() : ValorSubsystem()
 void TurretTracker::init() {
     initTable("TurretTracker");
     table->PutBoolean("Use Turret Shoot", false);
+    table->PutNumber("Joystick Multiplier", ShooterConstants::jMultiplier);
+    table->PutNumber("Delta Heading", 0);
 }
 
 void TurretTracker::setDrivetrain(Drivetrain *dt){
@@ -31,35 +33,59 @@ void TurretTracker::assessInputs() {
 }
 
 void TurretTracker::analyzeDashboard() {
+    state.jMultiplier = table->GetNumber("Joystick Multiplier", ShooterConstants::jMultiplier);
+}
 
+double TurretTracker::tMinusJ(double robotHeading, double turretPos, double jx, double jy)
+{
+    double turretHeading = robotHeading - 90 + turretPos;
+    if (turretHeading < -180) turretHeading += 360;
+    if (turretHeading > 180) turretHeading -= 360;
+
+    double tx = (shooter->state.distanceToHub) * cos(turretHeading * MathConstants::toRadians);
+    double ty = (shooter->state.distanceToHub) * sin(turretHeading * MathConstants::toRadians);
+
+    jx *= state.jMultiplier;
+    jy *= state.jMultiplier;
+
+    double rx = tx - jx;
+    double ry = ty - jy;
+
+    double turretHeadingDesired = atan2(ry, rx);
+    double deltaHeading = turretHeading - (turretHeadingDesired * MathConstants::toDegrees);
+
+    if (deltaHeading < -180) deltaHeading += 360;
+    if (deltaHeading > 180) deltaHeading -= 360;
+    
+    table->PutNumber("Delta Heading", deltaHeading);
+    return -deltaHeading;
 }
 
 void TurretTracker::assignOutputs() {
-    // state.cachedVX = drivetrain->getKinematics().ToChassisSpeeds().vx.to<double>();
-    // state.cachedVY = drivetrain->getKinematics().ToChassisSpeeds().vy.to<double>();
-    // state.cachedVT = drivetrain->getKinematics().ToChassisSpeeds().omega.to<double>();
-
     double tv = shooter->state.tv;
+
+    double robotHeading = drivetrain->getPose_m().Rotation().Degrees().to<double>();
+    double turretPos = shooter->turretEncoder.GetPosition();
+    double jx = drivetrain->state.leftStickX;
+    double jy = -1 * (drivetrain->state.leftStickY);
 
     if (tv == 1) {
         state.cachedTx = shooter->state.tx;
         // 0.75 = limeligh KP
         state.target = (-state.cachedTx * 0.75) + shooter->turretEncoder.GetPosition();
-        
-        state.cachedHeading = drivetrain->getPose_m().Rotation().Degrees().to<double>();
+
+        state.target += tMinusJ(robotHeading, turretPos, jx, jy);
+
+        state.cachedHeading = robotHeading;
         state.cachedX = drivetrain->getPose_m().X().to<double>();
         state.cachedY = drivetrain->getPose_m().Y().to<double>();
-        state.cachedTurretPos = shooter->turretEncoder.GetPosition();
-
-        // state.target = -1 * drivetrain->getPose_m().Rotation().Degrees().to<double>() + state.cachedTurretPos;
-        // atan2(drivetrain->getKinematics().ToChassisSpeeds().vx.to(<double>()), drivetrain->getPose_m().X());
-
+        state.cachedTurretPos = turretPos;
     }
     else {
         if (table->GetBoolean("Use Turret Shoot", false))
-            state.target = -1 * drivetrain->getPose_m().Rotation().Degrees().to<double>() + state.cachedTurretPos - state.cachedTx;
+            state.target = -1 * robotHeading + state.cachedTurretPos - state.cachedTx;
         else
-            state.target = shooter->turretEncoder.GetPosition();
+            state.target = turretPos;
     }
 
     if (state.target < -90) {
