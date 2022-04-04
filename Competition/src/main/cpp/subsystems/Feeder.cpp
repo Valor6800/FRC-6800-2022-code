@@ -95,12 +95,13 @@ void Feeder::assessInputs()
         state.feederState = FeederState::FEEDER_DISABLE;
     }
     
-    // Calculate instantaneous current
-    calcCurrent();
+    
 }
 
 void Feeder::analyzeDashboard()
 {
+    // Calculate instantaneous current
+    calcCurrent();
     state.reversed = table->GetBoolean("Reverse Feeder?", false);
     state.intakeReverseSpeed = table->GetNumber("Intake Reverse Speed", FeederConstants::DEFAULT_INTAKE_SPEED_REVERSE);
     state.feederReverseSpeed = table->GetNumber("Feeder Reverse Speed", FeederConstants::DEFAULT_FEEDER_SPEED_REVERSE);

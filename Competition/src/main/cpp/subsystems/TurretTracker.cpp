@@ -17,6 +17,7 @@ void TurretTracker::init() {
     initTable("TurretTracker");
     table->PutBoolean("Use Turret Shoot", false);
     table->PutNumber("Joystick Multiplier", ShooterConstants::jMultiplier);
+    table->PutNumber("Delta Heading", 0);
 }
 
 void TurretTracker::setDrivetrain(Drivetrain *dt){
@@ -51,13 +52,13 @@ double TurretTracker::tMinusJ(double robotHeading, double turretPos, double jx, 
     double ry = ty - jy;
 
     double turretHeadingDesired = atan2(ry, rx);
-    double deltaHeading = turretHeading - turretHeadingDesired;
+    double deltaHeading = turretHeading - (turretHeadingDesired * MathConstants::toDegrees);
 
     if (deltaHeading < -180) deltaHeading += 360;
     if (deltaHeading > 180) deltaHeading -= 360;
     
     table->PutNumber("Delta Heading", deltaHeading);
-    return deltaHeading;
+    return -deltaHeading;
 }
 
 void TurretTracker::assignOutputs() {
