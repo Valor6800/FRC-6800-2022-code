@@ -51,9 +51,9 @@ void Feeder::init()
     table->PutNumber("Average Amps", 0);
     table->PutBoolean("Spiked: ", 0);
     table->PutBoolean("Banner: ", 0);
-    
+
+    fmsTable = nt::NetworkTableInstance::GetDefault().GetTable("FMSInfo");
     resetState();
-    
 }
 
 void Feeder::setControllers(frc::XboxController *controllerO, frc::XboxController *controllerD)
@@ -96,8 +96,12 @@ void Feeder::assessInputs()
     else if (state.driver_leftTriggerPressed) {
         state.feederState = FeederState::FEEDER_CURRENT_INTAKE; //includes current/banner sensing
     }
-    else {
+    else if (!isOppositeColor()){
         state.feederState = FeederState::FEEDER_DISABLE;
+    }
+    else{
+        state.feederState = FeederState::FEEDER_SHOOT; //intake and feeder run
+        state.spiked = false;
     }
 }
 
@@ -203,4 +207,8 @@ void Feeder::resetState()
     state.previousBanner = false;
 
     resetDeque();
+}
+
+bool Feeder::isOppositeColor(){
+    return fmsTable->GetBoolean("IsRedAlliance", false) ^ !state.bannerTripped; //xor moment
 }
