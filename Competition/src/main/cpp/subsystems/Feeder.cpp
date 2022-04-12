@@ -17,16 +17,25 @@ Feeder::Feeder() : ValorSubsystem(),
                            operatorController(NULL),
                            motor_intake(FeederConstants::MOTOR_INTAKE_CAN_ID, "baseCAN"),
                            motor_stage(FeederConstants::MOTOR_STAGE_CAN_ID, "baseCAN"),
-                           banner(FeederConstants::BANNER_DIO_PORT)
+                           banner(FeederConstants::BANNER_DIO_PORT),
+                           revColorSensor(frc::I2C::kOnboard)
 
 {
     frc2::CommandScheduler::GetInstance().RegisterSubsystem(this);
     init();
 }
 
+void Feeder::setShooter(Shooter *s){
+    shooter = s;
+}
+
 void Feeder::init()
 {
     initTable("Feeder");
+    limeTable = nt::NetworkTableInstance::GetDefault().GetTable("limelight");
+
+    state.isRedAlliance = fmsTable->GetBoolean("IsRedAlliance", false);
+
     motor_intake.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
     motor_intake.SetNeutralMode(ctre::phoenix::motorcontrol::Coast);
     motor_intake.SetInverted(false);
@@ -48,12 +57,18 @@ void Feeder::init()
     table->PutNumber("Feeder Forward Speed Shoot", FeederConstants::DEFAULT_FEEDER_SPEED_FORWARD_SHOOT);
     table->PutNumber("Intake Spike Current", FeederConstants::JAM_CURRENT);
 
+    table->PutNumber("Blue Threshold", FeederConstants::BLUE_THRESHOLD);
+    table->PutNumber("Red Threshold", FeederConstants::RED_THRESHOLD);
+
     table->PutNumber("Average Amps", 0);
     table->PutBoolean("Spiked: ", 0);
     table->PutBoolean("Banner: ", 0);
-    
+
+    table->PutBoolean("Auto Poop Enabled", false);
+
+    state.timing = false;
+    fmsTable = nt::NetworkTableInstance::GetDefault().GetTable("FMSInfo");
     resetState();
-    
 }
 
 void Feeder::setControllers(frc::XboxController *controllerO, frc::XboxController *controllerD)
@@ -82,12 +97,12 @@ void Feeder::assessInputs()
 
     state.operator_leftBumperPressed = operatorController->GetLeftBumper();
         
-    if (state.driver_rightTriggerPressed || state.operator_leftBumperPressed) {
-        state.feederState = FeederState::FEEDER_SHOOT; //intake and feeder run
+    if (state.driver_leftBumperPressed) {
+        state.feederState = FeederState::FEEDER_REVERSE;
         state.spiked = false;
     }
-    else if (state.driver_leftBumperPressed) {
-        state.feederState = FeederState::FEEDER_REVERSE;
+    else if (state.driver_rightTriggerPressed || state.operator_leftBumperPressed) {
+        state.feederState = FeederState::FEEDER_SHOOT; //intake and feeder run
         state.spiked = false;
     }
     else if (state.driver_rightBumperPressed) {
@@ -114,8 +129,30 @@ void Feeder::analyzeDashboard()
     table->PutNumber("Average Amps", state.instCurrent);
     table->PutBoolean("Spiked: ", state.spiked);
     table->PutBoolean("Banner: ", state.bannerTripped);
+    table->PutBoolean("Queue top", state.ballHistory.front());
+
+    if (state.autoPoopEnabled){
+       if (isRed()){
+        state.curBall = 1;
+        }
+        else if (isBlue()){
+            state.curBall = 2;
+        }
+        else{
+            state.curBall = 0;
+        }
+        updateQueue();
+        state.prevBall = state.curBall; 
+
+        state.blueThreshold = table->GetNumber("Blue Threshold", FeederConstants::BLUE_THRESHOLD);
+        state.redThreshold = table->GetNumber("Red Threshold", FeederConstants::RED_THRESHOLD);
+
+        table->PutBoolean("isRed", isRed());
+        table->PutBoolean("isBlue", isBlue());
+    }
 
     table->PutNumber("current feeder state", state.feederState);
+    state.autoPoopEnabled = table->GetBoolean("Auto Poop Enabled", false);
     // Calculate instantaneous current
     calcCurrent();
 }
@@ -130,8 +167,27 @@ void Feeder::assignOutputs()
         motor_stage.Set(0);
     }
     else if (state.feederState == FeederState::FEEDER_SHOOT) {
-        motor_intake.Set(state.intakeForwardSpeed);
-        motor_stage.Set(state.feederForwardSpeedShoot);
+        if (state.autoPoopEnabled){
+            bool currentBall = state.ballHistory.front();
+            if (currentBall){
+                shooter->state.offsetTurret = true;
+                state.counter = 16;
+            }
+
+            if (state.counter <= 0){
+                motor_intake.Set(state.intakeForwardSpeed);
+                motor_stage.Set(state.feederForwardSpeedShoot);
+            }
+            else{
+                motor_intake.Set(0);
+                motor_stage.Set(0);
+            }
+            state.counter--;
+        }
+        else{
+            motor_intake.Set(state.intakeForwardSpeed);
+            motor_stage.Set(state.feederForwardSpeedShoot);
+        }
     }
     else if (state.feederState == Feeder::FEEDER_REVERSE) {
         motor_intake.Set(state.intakeReverseSpeed);
@@ -168,6 +224,10 @@ void Feeder::assignOutputs()
             motor_stage.Set(state.feederForwardSpeedDefault);
         }
     }
+    else if (state.feederState == FeederState::FEEDER_FEEDER_ONLY){
+        motor_intake.Set(0);
+        motor_stage.Set(state.feederForwardSpeedShoot);
+    }
     else {
         motor_intake.Set(0);
         motor_stage.Set(0);
@@ -187,6 +247,37 @@ void Feeder::calcCurrent() {
     state.instCurrent = sum / FeederConstants::CACHE_SIZE;
 }
 
+void Feeder::updateQueue(){
+    if (state.curBall != state.prevBall){
+        if (state.curBall == 1){ //red
+            if (!state.isRedAlliance){
+                state.ballHistory.push(true);
+            }
+            else{
+                state.ballHistory.push(false);
+            }
+        }
+        else if (state.curBall == 2){ //blue
+            if (state.isRedAlliance){
+                state.ballHistory.push(true);
+            }
+            else{
+                state.ballHistory.push(false);
+            }
+        }
+    }
+
+    if (state.feederState == FeederState::FEEDER_SHOOT){
+        double current = shooter->flywheel_lead.GetSelectedSensorVelocity();
+        double target = shooter->state.flywheelTarget;
+
+        double diff = fabs((current - target) / target);
+        if (diff > .15){
+            state.ballHistory.pop();
+        }
+    }    
+}
+
 void Feeder::resetDeque() {
     state.current_cache.clear();
     for (int i = 0; i < FeederConstants::CACHE_SIZE; i++) {
@@ -203,4 +294,12 @@ void Feeder::resetState()
     state.previousBanner = false;
 
     resetDeque();
+}
+
+bool Feeder::isRed(){
+    return revColorSensor.GetColor().red > state.redThreshold;
+}
+
+bool Feeder::isBlue(){
+    return revColorSensor.GetColor().blue > state.blueThreshold;
 }
