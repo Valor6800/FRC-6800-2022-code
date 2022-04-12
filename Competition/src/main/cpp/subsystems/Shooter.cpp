@@ -29,6 +29,8 @@ void Shooter::init()
 {
     limeTable = nt::NetworkTableInstance::GetDefault().GetTable("limelight");
     liftTable = nt::NetworkTableInstance::GetDefault().GetTable("Lift");
+    fmsTable = nt::NetworkTableInstance::GetDefault().GetTable("FMSInfo");
+    feederTable = nt::NetworkTableInstance::GetDefault().GetTable("Feeder");
     initTable("Shooter");
     
     table->PutBoolean("Zero Turret", false);
@@ -126,6 +128,26 @@ void Shooter::init()
     limelightTrack(true);
 
     setPIDProfile(0);
+
+    setupCommands();
+}
+
+void Shooter::setupCommands(){
+    frc2::FunctionalCommand poopShot(
+        [this]() { //onInit
+            state.hoodState = HoodState::HOOD_POOP;
+            state.flywheelState = FlywheelState::FLYWHEEL_POOP;
+        },
+        [this](){}, //onExecute
+        [this](bool){ //onEnd
+            state.hoodState = HoodState::HOOD_TRACK;
+            state.flywheelState = FlywheelState::FLYWHEEL_TRACK;
+        },
+        [this](){ //isFinished
+            return state.spiked;
+        }
+    );
+    poopOneBall.AddCommands(poopShot);
 }
 
 void Shooter::resetState(){
@@ -143,6 +165,10 @@ void Shooter::resetState(){
     state.hoodTarget = 0;
     state.distanceToHub = 0.5;//change to 0?
     state.currentBall = 0;
+}
+
+bool Shooter::isOppositeColor(){
+    return fmsTable->GetBoolean("IsRedAlliance", false) ^ feederTable->GetBoolean("Banner: ", 0); //clean xor moment😩
 }
 
 void Shooter::resetEncoder(){
@@ -215,6 +241,10 @@ void Shooter::assessInputs()
         state.flywheelState = FlywheelState::FLYWHEEL_TRACK; // Higher speed
     }
 
+    if (isOppositeColor()){
+        poopOneBall.Schedule();
+    }
+
     state.trackCorner = false;//state.rightBumper ? true : false;
 }
 
@@ -238,6 +268,16 @@ void Shooter::analyzeDashboard()
         state.turretState = TurretState::TURRET_DISABLE;
         state.hoodState = HoodState::HOOD_DOWN;
         state.flywheelState = FlywheelState::FLYWHEEL_DISABLE;
+    }
+
+    double rpm = state.flywheelTarget * ShooterConstants::falconMaxRPM;
+    double rp100ms = rpm / 600.0;
+    double ticsp100ms = rp100ms * ShooterConstants::falconGearRatio * ShooterConstants::ticsPerRev;
+    if (((flywheel_lead.GetSelectedSensorVelocity() - ticsp100ms) / ticsp100ms) > 0.15){
+        state.spiked = true;
+    }
+    else{
+        state.spiked = false;
     }
 
     // Turret homing and zeroing

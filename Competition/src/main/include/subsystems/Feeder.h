@@ -91,8 +91,9 @@ private:
 
     void calcCurrent();
     
-    
+    bool isOppositeColor();
 
+    std::shared_ptr<nt::NetworkTable> fmsTable;
 };
 
 #endif
