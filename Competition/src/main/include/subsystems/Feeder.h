@@ -14,6 +14,10 @@
 #include <frc/XboxController.h>
 #include <ctre/Phoenix.h>
 #include <frc/DigitalInput.h>
+#include <rev/ColorSensorV3.h>
+#include "Shooter.h"
+
+#include <queue>
 
 #ifndef FEEDER_H
 #define FEEDER_H
@@ -31,6 +35,7 @@ public:
     void assignOutputs();
 
     void resetState();
+    void setShooter(Shooter *s);
 
     enum FeederState {
         FEEDER_DISABLE,
@@ -58,7 +63,6 @@ public:
         bool currentBanner;
 
         bool reversed;
-
         bool spiked;
         
         double intakeForwardSpeed;
@@ -68,14 +72,29 @@ public:
         double feederForwardSpeedDefault;
         double feederForwardSpeedShoot;
         double feederReverseSpeed;
+
+        double blueThreshold;
+        double redThreshold;
+
+        bool autoPoopEnabled;
+
+        int curBall; //0 is nothing, 1 is red, 2 is blue
+        int prevBall;
+
+        int counter;
         
         //int current_cache_index;
         //std::vector<double> current_cache;
         std::deque<double> current_cache;
 
+        bool isRedAlliance;
+
         double instCurrent;
 
         FeederState feederState;
+
+        std::queue<bool> ballHistory;
+
     } state;
 
 void resetDeque();
@@ -88,11 +107,19 @@ private:
     WPI_TalonFX motor_stage;
 
     frc::DigitalInput banner;
-
+    rev::ColorSensorV3 revColorSensor;
+    
     void calcCurrent();
+    void updateQueue();
     
-    
+    bool isRed();
+    bool isBlue();
+    bool isOppositeColor();
 
+    std::shared_ptr<nt::NetworkTable> fmsTable;
+    std::shared_ptr<nt::NetworkTable> limeTable;
+
+    Shooter *shooter;
 };
 
 #endif

@@ -409,6 +409,7 @@ void Shooter::assignOutputs()
     double rpm = state.flywheelTarget * ShooterConstants::falconMaxRPM;
     double rp100ms = rpm / 600.0;
     double ticsp100ms = rp100ms * ShooterConstants::falconGearRatio * ShooterConstants::ticsPerRev;
+    state.flywheelTarget = ticsp100ms;
 
     table->PutNumber("FlyWheel State", state.flywheelState);
     table->PutNumber("FlyWheel Target", ticsp100ms);
@@ -442,12 +443,4 @@ void Shooter::assignOutputs()
 
 void Shooter::assignTurret(double tg) {
     state.turretDesired = tg;
-    if(state.driverDPadLeft){
-        if (state.turretDesired < 90){
-            state.turretDesired += 15;
-        }
-        else{
-            state.turretDesired -= 15;
-        }
-    }
 }

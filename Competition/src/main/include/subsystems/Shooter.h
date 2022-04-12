@@ -26,6 +26,7 @@
 #include <frc/smartdashboard/SmartDashboard.h>
 #include "networktables/NetworkTable.h"
 #include <frc/livewindow/LiveWindow.h>
+#include <frc2/command/FunctionalCommand.h>
 
 #ifndef SHOOTER_H
 #define SHOOTER_H
@@ -45,8 +46,6 @@ public:
 
     void resetState();
     void resetEncoder();
-
-
 
      double getTargetTics(double, double, double, double, double, double, double);
      double convertTargetTics(double, double);
@@ -136,6 +135,12 @@ public:
 
           double tv;
           double tx;
+
+          bool spiked;
+
+          bool offsetTurret;
+
+          double flywheelRPM;
 
     } state;
 
