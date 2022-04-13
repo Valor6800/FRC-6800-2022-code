@@ -17,7 +17,8 @@ Feeder::Feeder() : ValorSubsystem(),
                            operatorController(NULL),
                            motor_intake(FeederConstants::MOTOR_INTAKE_CAN_ID, "baseCAN"),
                            motor_stage(FeederConstants::MOTOR_STAGE_CAN_ID, "baseCAN"),
-                           banner(FeederConstants::BANNER_DIO_PORT)
+                           banner(FeederConstants::BANNER_DIO_PORT),
+                           colorSensor(FeederConstants::COLOR_SENSOR_DIO_PORT)
 
 {
     frc2::CommandScheduler::GetInstance().RegisterSubsystem(this);
@@ -118,6 +119,7 @@ void Feeder::analyzeDashboard()
     table->PutNumber("Average Amps", state.instCurrent);
     table->PutBoolean("Spiked: ", state.spiked);
     table->PutBoolean("Banner: ", state.bannerTripped);
+    table->PutBoolean("Color is red: ", state.colorIsRed);
 
     table->PutNumber("current feeder state", state.feederState);
     // Calculate instantaneous current
@@ -127,6 +129,7 @@ void Feeder::analyzeDashboard()
 void Feeder::assignOutputs()
 {
     state.bannerTripped = !banner.Get();
+    state.colorIsRed = colorSensor.Get();
     state.currentBanner = state.bannerTripped;
 
     if (state.feederState == FeederState::FEEDER_DISABLE) {
@@ -209,6 +212,10 @@ void Feeder::resetState()
     resetDeque();
 }
 
+//need to tune color sensor to recognize red
 bool Feeder::isOppositeColor(){
-    return fmsTable->GetBoolean("IsRedAlliance", false) ^ !state.bannerTripped; //xor moment
+    if (state.bannerTripped){
+        return fmsTable->GetBoolean("IsRedAlliance", false) ^ state.colorIsRed; //xor moment
+    }
+    return false;
 }

@@ -168,7 +168,11 @@ void Shooter::resetState(){
 }
 
 bool Shooter::isOppositeColor(){
-    return fmsTable->GetBoolean("IsRedAlliance", false) ^ feederTable->GetBoolean("Banner: ", 0); //clean xor moment😩
+    if (feederTable->GetBoolean("Banner: ", false)){
+         //clean xor moment😩
+        return fmsTable->GetBoolean("IsRedAlliance", false) ^ feederTable->GetBoolean("Color is red: ", false);
+    }
+    return false;
 }
 
 void Shooter::resetEncoder(){
