@@ -56,6 +56,7 @@ public:
         bool bannerTripped;
         bool previousBanner;
         bool currentBanner;
+        bool colorIsRed;
 
         bool reversed;
 
@@ -88,6 +89,7 @@ private:
     WPI_TalonFX motor_stage;
 
     frc::DigitalInput banner;
+    frc::DigitalInput colorSensor;
 
     void calcCurrent();
     
