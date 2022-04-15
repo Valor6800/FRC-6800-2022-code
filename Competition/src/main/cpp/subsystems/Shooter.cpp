@@ -136,15 +136,22 @@ void Shooter::setupCommands(){
     frc2::FunctionalCommand poopShot(
         [this]() { //onInit
             state.hoodState = HoodState::HOOD_POOP;
-            state.flywheelState = FlywheelState::FLYWHEEL_POOP;
+            //state.flywheelState = FlywheelState::FLYWHEEL_POOP;
         },
-        [this](){}, //onExecute
+        [this](){
+            if (state.turretTarget < 90){
+                state.turretTarget += 3;
+            }
+            else{
+                state.turretTarget -= 3;
+            }
+        }, //onExecute
         [this](bool){ //onEnd
             state.hoodState = HoodState::HOOD_TRACK;
-            state.flywheelState = FlywheelState::FLYWHEEL_TRACK;
+            //state.flywheelState = FlywheelState::FLYWHEEL_TRACK;
         },
         [this](){ //isFinished
-            return state.spiked;
+            return state.spiked || (feederTable->GetBoolean("Color sensor", false) ^ fmsTable->GetBoolean("IsRedAlliance", false));
         }
     );
     poopOneBall.AddCommands(poopShot);
@@ -165,14 +172,27 @@ void Shooter::resetState(){
     state.hoodTarget = 0;
     state.distanceToHub = 0.5;//change to 0?
     state.currentBall = 0;
+
+    state.currentBallIsRed = false;
 }
 
 bool Shooter::isOppositeColor(){
-    if (feederTable->GetBoolean("Banner: ", false)){
-         //clean xor moment😩
-        return fmsTable->GetBoolean("IsRedAlliance", false) ^ feederTable->GetBoolean("Color is red: ", false);
+    if (feederTable->GetBoolean("Color sensor", false) || state.currentBallIsRed){
+        state.currentBallIsRed = true;
+        if (!feederTable->GetBoolean("Banner: ", false)){
+            state.currentBallIsRed = false;
+        }
+        return !fmsTable->GetBoolean("IsRedAlliance", false);
     }
-    return false;
+    //either blue or no ball at all
+    else{
+        //blue
+        if (feederTable->GetBoolean("Banner: ", false)){
+            return fmsTable->GetBoolean("IsRedAlliance", false);
+        }
+        //no ball at all
+        return false;
+    }
 }
 
 void Shooter::resetEncoder(){
@@ -277,12 +297,15 @@ void Shooter::analyzeDashboard()
     double rpm = state.flywheelTarget * ShooterConstants::falconMaxRPM;
     double rp100ms = rpm / 600.0;
     double ticsp100ms = rp100ms * ShooterConstants::falconGearRatio * ShooterConstants::ticsPerRev;
-    if (((flywheel_lead.GetSelectedSensorVelocity() - ticsp100ms) / ticsp100ms) > 0.15){
+    if (fabs((flywheel_lead.GetSelectedSensorVelocity() - ticsp100ms) / ticsp100ms) > 0.15){
         state.spiked = true;
     }
     else{
         state.spiked = false;
     }
+
+    table->PutBoolean("Shooter spiked", state.spiked);
+    table->PutNumber("percent diff", ((flywheel_lead.GetSelectedSensorVelocity() - ticsp100ms) / ticsp100ms));
 
     // Turret homing and zeroing
     if (table->GetBoolean("Zero Turret", false)) {

@@ -232,7 +232,7 @@ namespace FeederConstants{
     constexpr static int MOTOR_STAGE_CAN_ID = 10;
 
     constexpr static int BANNER_DIO_PORT = 5;
-    constexpr static int COLOR_SENSOR_DIO_PORT = 6;
+    constexpr static int COLOR_SENSOR_DIO_PORT = 8;
 
     constexpr static double DEFAULT_INTAKE_SPEED_FORWARD = 0.7;
     constexpr static double DEFAULT_INTAKE_SPEED_REVERSE = -0.7;

@@ -140,6 +140,8 @@ public:
 
           bool spiked;
 
+          bool currentBallIsRed;
+
     } state;
 
      void limelightTrack(bool track);

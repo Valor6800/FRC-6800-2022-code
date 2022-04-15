@@ -56,11 +56,13 @@ public:
         bool bannerTripped;
         bool previousBanner;
         bool currentBanner;
-        bool colorIsRed;
+        bool colorSensorRed;
 
         bool reversed;
 
         bool spiked;
+
+        bool currentBallIsRed;
         
         double intakeForwardSpeed;
         double intakeReverseSpeed;

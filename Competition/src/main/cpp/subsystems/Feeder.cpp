@@ -54,6 +54,8 @@ void Feeder::init()
     table->PutBoolean("Banner: ", 0);
 
     fmsTable = nt::NetworkTableInstance::GetDefault().GetTable("FMSInfo");
+
+    state.currentBallIsRed = false;
     resetState();
 }
 
@@ -86,10 +88,12 @@ void Feeder::assessInputs()
     if (state.driver_rightTriggerPressed || state.operator_leftBumperPressed) {
         state.feederState = FeederState::FEEDER_SHOOT; //intake and feeder run
         state.spiked = false;
+        //state.currentBallIsRed = false;
     }
     else if (state.driver_leftBumperPressed) {
         state.feederState = FeederState::FEEDER_REVERSE;
         state.spiked = false;
+        //state.currentBallIsRed = false;
     }
     else if (state.driver_rightBumperPressed) {
         state.feederState = FeederState::FEEDER_REGULAR_INTAKE; //standard intake
@@ -103,11 +107,15 @@ void Feeder::assessInputs()
     else{
         state.feederState = FeederState::FEEDER_SHOOT; //intake and feeder run
         state.spiked = false;
+        //state.currentBallIsRed = false;
     }
 }
 
 void Feeder::analyzeDashboard()
 {
+    state.bannerTripped = !banner.Get();
+    state.colorSensorRed = colorSensor.Get() == 0 ? false : true;
+
     state.reversed = table->GetBoolean("Reverse Feeder?", false);
     state.intakeReverseSpeed = table->GetNumber("Intake Reverse Speed", FeederConstants::DEFAULT_INTAKE_SPEED_REVERSE);
     state.feederReverseSpeed = table->GetNumber("Feeder Reverse Speed", FeederConstants::DEFAULT_FEEDER_SPEED_REVERSE);
@@ -119,7 +127,7 @@ void Feeder::analyzeDashboard()
     table->PutNumber("Average Amps", state.instCurrent);
     table->PutBoolean("Spiked: ", state.spiked);
     table->PutBoolean("Banner: ", state.bannerTripped);
-    table->PutBoolean("Color is red: ", state.colorIsRed);
+    table->PutBoolean("Color sensor", state.colorSensorRed);
 
     table->PutNumber("current feeder state", state.feederState);
     // Calculate instantaneous current
@@ -128,8 +136,6 @@ void Feeder::analyzeDashboard()
 
 void Feeder::assignOutputs()
 {
-    state.bannerTripped = !banner.Get();
-    state.colorIsRed = colorSensor.Get();
     state.currentBanner = state.bannerTripped;
 
     if (state.feederState == FeederState::FEEDER_DISABLE) {
@@ -208,14 +214,27 @@ void Feeder::resetState()
 
     state.spiked = false;
     state.previousBanner = false;
+    state.currentBallIsRed = false;
 
     resetDeque();
 }
 
 //need to tune color sensor to recognize red
 bool Feeder::isOppositeColor(){
-    if (state.bannerTripped){
-        return fmsTable->GetBoolean("IsRedAlliance", false) ^ state.colorIsRed; //xor moment
+    if (state.colorSensorRed || state.currentBallIsRed){
+        state.currentBallIsRed = true;
+        if (!state.bannerTripped){
+            state.currentBallIsRed = false;
+        }
+        return !fmsTable->GetBoolean("IsRedAlliance", false);
     }
-    return false;
+    //either blue or no ball at all
+    else{
+        //blue
+        if (state.bannerTripped){
+            return fmsTable->GetBoolean("IsRedAlliance", false);
+        }
+        //no ball at all
+        return false;
+    }
 }
