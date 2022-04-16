@@ -78,6 +78,7 @@ public:
         double redThreshold;
 
         bool timing;
+        bool autoPoopEnabled;
         
         //int current_cache_index;
         //std::vector<double> current_cache;
@@ -111,6 +112,7 @@ private:
     bool isOppositeColor();
 
     std::shared_ptr<nt::NetworkTable> fmsTable;
+    std::shared_ptr<nt::NetworkTable> limeTable;
 };
 
 #endif

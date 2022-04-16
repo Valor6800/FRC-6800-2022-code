@@ -142,6 +142,8 @@ public:
 
           bool offsetTurret;
 
+          bool autoPoopEnabled;
+
     } state;
 
      void limelightTrack(bool track);

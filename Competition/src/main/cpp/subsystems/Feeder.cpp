@@ -29,6 +29,8 @@ Feeder::Feeder() : ValorSubsystem(),
 void Feeder::init()
 {
     initTable("Feeder");
+    limeTable = nt::NetworkTableInstance::GetDefault().GetTable("limelight");
+
     motor_intake.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
     motor_intake.SetNeutralMode(ctre::phoenix::motorcontrol::Coast);
     motor_intake.SetInverted(false);
@@ -56,6 +58,8 @@ void Feeder::init()
     table->PutNumber("Average Amps", 0);
     table->PutBoolean("Spiked: ", 0);
     table->PutBoolean("Banner: ", 0);
+
+    table->PutBoolean("Auto Poop Enabled", false);
 
     state.timing = false;
     ballTimer.Reset();
@@ -90,26 +94,25 @@ void Feeder::assessInputs()
 
     state.operator_leftBumperPressed = operatorController->GetLeftBumper();
         
-    if (state.driver_rightTriggerPressed || state.operator_leftBumperPressed) {
-        state.feederState = FeederState::FEEDER_SHOOT; //intake and feeder run
-        state.spiked = false;
-    }
-    else if (state.driver_leftBumperPressed) {
+    if (state.driver_leftBumperPressed) {
         state.feederState = FeederState::FEEDER_REVERSE;
         state.spiked = false;
     }
-    else if(isOppositeColor()){
-        //waite .15 seconds
+    else if(isOppositeColor() && state.autoPoopEnabled){
         if (!state.timing) {
             state.timing = true;
             ballTimer.Reset();
             ballTimer.Start();
         }
-        if (ballTimer.Get() > 0.15_s) {
+        if (ballTimer.Get() > 0.15_s && limeTable->GetNumber("tv", 0.0)) {
             state.feederState = FeederState::FEEDER_FEEDER_ONLY; //intake and feeder run
             state.spiked = false;
             ballTimer.Stop();
         }
+    }
+    else if (state.driver_rightTriggerPressed || state.operator_leftBumperPressed) {
+        state.feederState = FeederState::FEEDER_SHOOT; //intake and feeder run
+        state.spiked = false;
     }
     else if (state.driver_rightBumperPressed) {
         state.feederState = FeederState::FEEDER_REGULAR_INTAKE; //standard intake
@@ -149,6 +152,7 @@ void Feeder::analyzeDashboard()
     table->PutBoolean("isBlue", isBlue());
 
     table->PutNumber("current feeder state", state.feederState);
+    state.autoPoopEnabled = table->GetBoolean("Auto Poop Enabled", false);
     // Calculate instantaneous current
     calcCurrent();
 }

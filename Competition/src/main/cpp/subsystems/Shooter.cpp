@@ -150,6 +150,7 @@ void Shooter::setupCommands(){
             return state.spiked;
         }
     );
+    poopOneBall.AddCommands(frc2::WaitCommand((units::second_t)0.15));
     poopOneBall.AddCommands(poopShot);
 }
 
@@ -250,7 +251,7 @@ void Shooter::assessInputs()
         state.flywheelState = FlywheelState::FLYWHEEL_TRACK; // Higher speed
     }
 
-    if (isOppositeColor()){
+    if (isOppositeColor() && state.autoPoopEnabled && state.tv){
         poopOneBall.Schedule();
     }
 
@@ -355,6 +356,8 @@ void Shooter::analyzeDashboard()
     state.powerC_2x = table->GetNumber("Power Y Int 2X", ShooterConstants::cPower_2x);
 
     state.pipeline = limeTable->GetNumber("pipeline", 0);
+
+    state.autoPoopEnabled = feederTable->GetBoolean("Auto Poop Enabled", false);
 }
 
 //0 is close (1x zoom), 1 is far (2x zoom), 2 is auto (1x zoom)
