@@ -10,6 +10,7 @@
 #include <frc/kinematics/DifferentialDriveKinematics.h>
 #include <frc/trajectory/constraint/DifferentialDriveVoltageConstraint.h>
 #include <cmath>
+#include <frc/I2C.h>
 
 /**
  * The Constants header provides a convenient place for teams to hold robot-wide
@@ -243,6 +244,9 @@ namespace FeederConstants{
 
     constexpr static int CACHE_SIZE = 20;
     constexpr static double JAM_CURRENT = 20;
+
+    constexpr static double BLUE_THRESHOLD = 0.26;
+    constexpr static double RED_THRESHOLD = 0.3;
 }
 
 namespace MathConstants{

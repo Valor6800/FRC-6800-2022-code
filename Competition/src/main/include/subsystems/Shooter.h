@@ -140,6 +140,8 @@ public:
 
           bool spiked;
 
+          bool offsetTurret;
+
     } state;
 
      void limelightTrack(bool track);

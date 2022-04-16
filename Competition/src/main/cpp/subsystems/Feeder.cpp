@@ -18,7 +18,8 @@ Feeder::Feeder() : ValorSubsystem(),
                            motor_intake(FeederConstants::MOTOR_INTAKE_CAN_ID, "baseCAN"),
                            motor_stage(FeederConstants::MOTOR_STAGE_CAN_ID, "baseCAN"),
                            banner(FeederConstants::BANNER_DIO_PORT),
-                           colorSensor(FeederConstants::COLOR_SENSOR_DIO_PORT)
+                           colorSensor(FeederConstants::COLOR_SENSOR_DIO_PORT),
+                           revColorSensor(frc::I2C::kOnboard)
 
 {
     frc2::CommandScheduler::GetInstance().RegisterSubsystem(this);
@@ -49,9 +50,15 @@ void Feeder::init()
     table->PutNumber("Feeder Forward Speed Shoot", FeederConstants::DEFAULT_FEEDER_SPEED_FORWARD_SHOOT);
     table->PutNumber("Intake Spike Current", FeederConstants::JAM_CURRENT);
 
+    table->PutNumber("Blue Threshold", FeederConstants::BLUE_THRESHOLD);
+    table->PutNumber("Red Threshold", FeederConstants::RED_THRESHOLD);
+
     table->PutNumber("Average Amps", 0);
     table->PutBoolean("Spiked: ", 0);
     table->PutBoolean("Banner: ", 0);
+
+    state.timing = false;
+    ballTimer.Reset();
 
     fmsTable = nt::NetworkTableInstance::GetDefault().GetTable("FMSInfo");
     resetState();
@@ -91,18 +98,27 @@ void Feeder::assessInputs()
         state.feederState = FeederState::FEEDER_REVERSE;
         state.spiked = false;
     }
+    else if(isOppositeColor()){
+        //waite .15 seconds
+        if (!state.timing) {
+            state.timing = true;
+            ballTimer.Reset();
+            ballTimer.Start();
+        }
+        if (ballTimer.Get() > 0.15_s) {
+            state.feederState = FeederState::FEEDER_FEEDER_ONLY; //intake and feeder run
+            state.spiked = false;
+            ballTimer.Stop();
+        }
+    }
     else if (state.driver_rightBumperPressed) {
         state.feederState = FeederState::FEEDER_REGULAR_INTAKE; //standard intake
     }
     else if (state.driver_leftTriggerPressed) {
         state.feederState = FeederState::FEEDER_CURRENT_INTAKE; //includes current/banner sensing
     }
-    else if (!isOppositeColor()){
-        state.feederState = FeederState::FEEDER_DISABLE;
-    }
     else{
-        state.feederState = FeederState::FEEDER_SHOOT; //intake and feeder run
-        state.spiked = false;
+        state.feederState = FeederState::FEEDER_DISABLE;
     }
 }
 
@@ -120,6 +136,17 @@ void Feeder::analyzeDashboard()
     table->PutBoolean("Spiked: ", state.spiked);
     table->PutBoolean("Banner: ", state.bannerTripped);
     table->PutBoolean("Color is red: ", state.colorIsRed);
+
+    table->PutNumber("red", revColorSensor.GetColor().red);
+    table->PutNumber("blue", revColorSensor.GetColor().blue);
+    table->PutNumber("green", revColorSensor.GetColor().green);
+    table->PutNumber("infared", revColorSensor.GetIR());
+
+    state.blueThreshold = table->GetNumber("Blue Threshold", FeederConstants::BLUE_THRESHOLD);
+    state.redThreshold = table->GetNumber("Red Threshold", FeederConstants::RED_THRESHOLD);
+
+    table->PutBoolean("isRed", isRed());
+    table->PutBoolean("isBlue", isBlue());
 
     table->PutNumber("current feeder state", state.feederState);
     // Calculate instantaneous current
@@ -175,6 +202,10 @@ void Feeder::assignOutputs()
             motor_stage.Set(state.feederForwardSpeedDefault);
         }
     }
+    else if (state.feederState == FeederState::FEEDER_FEEDER_ONLY){
+        motor_intake.Set(0);
+        motor_stage.Set(state.feederForwardSpeedShoot);
+    }
     else {
         motor_intake.Set(0);
         motor_stage.Set(0);
@@ -212,10 +243,20 @@ void Feeder::resetState()
     resetDeque();
 }
 
-//need to tune color sensor to recognize red
+bool Feeder::isRed(){
+    return revColorSensor.GetColor().red > state.redThreshold;
+}
+
+bool Feeder::isBlue(){
+    return revColorSensor.GetColor().blue > state.blueThreshold;
+}
+
 bool Feeder::isOppositeColor(){
-    if (state.bannerTripped){
-        return fmsTable->GetBoolean("IsRedAlliance", false) ^ state.colorIsRed; //xor moment
+    if (isRed() && !fmsTable->GetBoolean("IsRedAlliance", false)){
+        return true;
+    }
+    if (isBlue() && fmsTable->GetBoolean("IsRedAlliance", false)){
+        return true;
     }
     return false;
 }

@@ -14,6 +14,9 @@
 #include <frc/XboxController.h>
 #include <ctre/Phoenix.h>
 #include <frc/DigitalInput.h>
+#include <rev/ColorSensorV3.h>
+
+#include <frc/Timer.h>
 
 #ifndef FEEDER_H
 #define FEEDER_H
@@ -37,7 +40,8 @@ public:
         FEEDER_REVERSE,
         FEEDER_SHOOT,
         FEEDER_CURRENT_INTAKE,
-        FEEDER_REGULAR_INTAKE
+        FEEDER_REGULAR_INTAKE,
+        FEEDER_FEEDER_ONLY
     };
     
     struct x
@@ -69,6 +73,11 @@ public:
         double feederForwardSpeedDefault;
         double feederForwardSpeedShoot;
         double feederReverseSpeed;
+
+        double blueThreshold;
+        double redThreshold;
+
+        bool timing;
         
         //int current_cache_index;
         //std::vector<double> current_cache;
@@ -91,8 +100,14 @@ private:
     frc::DigitalInput banner;
     frc::DigitalInput colorSensor;
 
+    rev::ColorSensorV3 revColorSensor;
+
+    frc::Timer ballTimer;
+
     void calcCurrent();
     
+    bool isRed();
+    bool isBlue();
     bool isOppositeColor();
 
     std::shared_ptr<nt::NetworkTable> fmsTable;

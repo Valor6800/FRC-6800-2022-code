@@ -136,12 +136,15 @@ void Shooter::setupCommands(){
     frc2::FunctionalCommand poopShot(
         [this]() { //onInit
             state.hoodState = HoodState::HOOD_POOP;
-            state.flywheelState = FlywheelState::FLYWHEEL_POOP;
+            state.offsetTurret = true;
+            //state.flywheelState = FlywheelState::FLYWHEEL_POOP;
         },
-        [this](){}, //onExecute
+        [this](){
+        }, //onExecute
         [this](bool){ //onEnd
             state.hoodState = HoodState::HOOD_TRACK;
-            state.flywheelState = FlywheelState::FLYWHEEL_TRACK;
+            state.offsetTurret = false;
+            //state.flywheelState = FlywheelState::FLYWHEEL_TRACK;
         },
         [this](){ //isFinished
             return state.spiked;
@@ -168,9 +171,11 @@ void Shooter::resetState(){
 }
 
 bool Shooter::isOppositeColor(){
-    if (feederTable->GetBoolean("Banner: ", false)){
-         //clean xor moment😩
-        return fmsTable->GetBoolean("IsRedAlliance", false) ^ feederTable->GetBoolean("Color is red: ", false);
+    if (feederTable->GetBoolean("isRed", false) && !fmsTable->GetBoolean("IsRedAlliance", false)){
+        return true;
+    }
+    if (feederTable->GetBoolean("isBlue", false) && fmsTable->GetBoolean("IsRedAlliance", false)){
+        return true;
     }
     return false;
 }
@@ -277,7 +282,7 @@ void Shooter::analyzeDashboard()
     double rpm = state.flywheelTarget * ShooterConstants::falconMaxRPM;
     double rp100ms = rpm / 600.0;
     double ticsp100ms = rp100ms * ShooterConstants::falconGearRatio * ShooterConstants::ticsPerRev;
-    if (((flywheel_lead.GetSelectedSensorVelocity() - ticsp100ms) / ticsp100ms) > 0.15){
+    if (fabs((flywheel_lead.GetSelectedSensorVelocity() - ticsp100ms) / ticsp100ms) > 0.15){
         state.spiked = true;
     }
     else{
@@ -482,4 +487,12 @@ void Shooter::assignOutputs()
 
 void Shooter::assignTurret(double tg) {
     state.turretDesired = tg;
+    if (state.offsetTurret){
+        if (state.turretDesired < 90){
+            state.turretDesired += 15;
+        }
+        else{
+            state.turretDesired -= 15;
+        }
+    }
 }
