@@ -12,6 +12,7 @@ RobotContainer::RobotContainer() : m_auto(&m_drivetrain, &m_shooter, &m_feeder, 
     m_shooter.setDrivetrain(&m_drivetrain);
     m_turretTracker.setDrivetrain(&m_drivetrain);
     m_turretTracker.setShooter(&m_shooter);
+    m_feeder.setShooter(&m_shooter);
 }
 
 

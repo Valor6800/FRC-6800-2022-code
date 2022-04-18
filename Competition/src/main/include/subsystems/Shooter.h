@@ -26,6 +26,7 @@
 #include <frc/smartdashboard/SmartDashboard.h>
 #include "networktables/NetworkTable.h"
 #include <frc/livewindow/LiveWindow.h>
+#include <frc2/command/FunctionalCommand.h>
 
 #ifndef SHOOTER_H
 #define SHOOTER_H
@@ -55,6 +56,8 @@ public:
      void setPIDProfile(int slotID);
 
      void assignTurret(double tg);
+
+     bool isOppositeColor();
 
     enum TurretState{
          TURRET_DISABLE, // Not moving
@@ -137,9 +140,18 @@ public:
           double tv;
           double tx;
 
+          bool spiked;
+
+          bool offsetTurret;
+
+          bool autoPoopEnabled;
+
+          double flywheelRPM;
+
     } state;
 
      void limelightTrack(bool track);
+     void setupCommands();
 
      WPI_TalonFX flywheel_lead;
 
@@ -156,11 +168,15 @@ public:
 
      std::shared_ptr<nt::NetworkTable> limeTable;
      std::shared_ptr<nt::NetworkTable> liftTable;
+     std::shared_ptr<nt::NetworkTable> fmsTable;
+     std::shared_ptr<nt::NetworkTable> feederTable;
 
      Drivetrain *odom;
 
      frc::SendableChooser<int> m_chooserLimelight;
      frc::SendableChooser<int> m_chooserPID;
+
+     frc2::SequentialCommandGroup poopOneBall;
 };
 
 #endif
