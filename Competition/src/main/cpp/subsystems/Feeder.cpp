@@ -129,7 +129,12 @@ void Feeder::analyzeDashboard()
     table->PutNumber("Average Amps", state.instCurrent);
     table->PutBoolean("Spiked: ", state.spiked);
     table->PutBoolean("Banner: ", state.bannerTripped);
-    table->PutBoolean("Queue top", state.ballHistory.front());
+    if (!(state.ballHistory.empty())){
+        table->PutBoolean("Queue top", state.ballHistory.front());
+    }
+    else{
+        table->PutBoolean("Queue top", false);
+    }
 
     if (state.autoPoopEnabled){
        if (isRed()){
@@ -168,7 +173,10 @@ void Feeder::assignOutputs()
     }
     else if (state.feederState == FeederState::FEEDER_SHOOT) {
         if (state.autoPoopEnabled){
-            bool currentBall = state.ballHistory.front();
+            bool currentBall = false;
+            if (!(state.ballHistory.empty())){
+                currentBall = state.ballHistory.front();
+            }
             if (currentBall){
                 shooter->state.offsetTurret = true;
                 state.counter = 16;
@@ -272,7 +280,7 @@ void Feeder::updateQueue(){
         double target = shooter->state.flywheelTarget;
 
         double diff = fabs((current - target) / target);
-        if (diff > .15){
+        if (diff > .15 && !(state.ballHistory.empty())){
             state.ballHistory.pop();
         }
     }    
