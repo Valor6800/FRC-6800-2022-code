@@ -14,6 +14,9 @@
 #include <ctre/Phoenix.h>
 #include <frc/DigitalInput.h>
 
+#include "sensors/ValorCurrentSensor.h"
+#include "sensors/ValorDebounceSensor.h"
+
 #ifndef FEEDER_H
 #define FEEDER_H
 
@@ -42,32 +45,19 @@ public:
     struct x
     {
 
-        bool bannerTripped;
-        bool previousBanner;
-        bool currentBanner;
-
         bool reversed;
-
-        bool spiked;
         
         double intakeForwardSpeed;
         double intakeReverseSpeed;
-        double spikeCurrent;
 
         double feederForwardSpeedDefault;
         double feederForwardSpeedShoot;
         double feederReverseSpeed;
-        
-        //int current_cache_index;
-        //std::vector<double> current_cache;
-        std::deque<double> current_cache;
-
-        double instCurrent;
 
         FeederState feederState;
     } state;
 
-void resetDeque();
+    void resetIntakeSensor();
 
 private:
     ValorGamepad *driverController;
@@ -76,11 +66,10 @@ private:
     WPI_TalonFX motor_intake;
     WPI_TalonFX motor_stage;
 
-    frc::DigitalInput banner;
+    ValorCurrentSensor currentSensor;
+    ValorDebounceSensor debounceSensor;
 
-    void calcCurrent();
-    
-    
+    frc::DigitalInput banner;
 
 };
 

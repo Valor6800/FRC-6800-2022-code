@@ -18,7 +18,6 @@ Feeder::Feeder() : ValorSubsystem(),
                            motor_intake(FeederConstants::MOTOR_INTAKE_CAN_ID, "baseCAN"),
                            motor_stage(FeederConstants::MOTOR_STAGE_CAN_ID, "baseCAN"),
                            banner(FeederConstants::BANNER_DIO_PORT)
-
 {
     frc2::CommandScheduler::GetInstance().RegisterSubsystem(this);
     init();
@@ -53,7 +52,14 @@ void Feeder::init()
     table->PutBoolean("Banner: ", 0);
     
     resetState();
+    currentSensor.setGetter([this]() { return motor_intake.GetOutputCurrent(); });
+    debounceSensor.setGetter([this]() { return !banner.Get(); });
     
+}
+
+void Feeder::resetIntakeSensor()
+{
+    currentSensor.reset();
 }
 
 void Feeder::setControllers(ValorGamepad *controllerO, ValorGamepad *controllerD)
@@ -71,11 +77,11 @@ void Feeder::assessInputs()
         
     if (driverController->rightTrigger() || operatorController->GetLeftBumper()) {
         state.feederState = FeederState::FEEDER_SHOOT; //intake and feeder run
-        state.spiked = false;
+        resetIntakeSensor();
     }
     else if (driverController->GetLeftBumper()) {
         state.feederState = FeederState::FEEDER_REVERSE;
-        state.spiked = false;
+        resetIntakeSensor();
     }
     else if (driverController->GetRightBumper()) {
         state.feederState = FeederState::FEEDER_REGULAR_INTAKE; //standard intake
@@ -87,27 +93,26 @@ void Feeder::assessInputs()
 
 void Feeder::analyzeDashboard()
 {
+    // Calculate instantaneous current
+    currentSensor.calculate();
+    // Calculate banner sensor trigger
+    debounceSensor.calculate();
+
     state.reversed = table->GetBoolean("Reverse Feeder?", false);
     state.intakeReverseSpeed = table->GetNumber("Intake Reverse Speed", FeederConstants::DEFAULT_INTAKE_SPEED_REVERSE);
     state.feederReverseSpeed = table->GetNumber("Feeder Reverse Speed", FeederConstants::DEFAULT_FEEDER_SPEED_REVERSE);
     state.intakeForwardSpeed = table->GetNumber("Intake Forward Speed", FeederConstants::DEFAULT_INTAKE_SPEED_FORWARD);
     state.feederForwardSpeedDefault = table->GetNumber("Feeder Forward Speed Default", FeederConstants::DEFAULT_FEEDER_SPEED_FORWARD_DEFAULT);
     state.feederForwardSpeedShoot = table->GetNumber("Feeder Forward Speed Shoot", FeederConstants::DEFAULT_FEEDER_SPEED_FORWARD_SHOOT);
-    state.spikeCurrent = table->GetNumber("Intake Spike Current", FeederConstants::JAM_CURRENT);
 
-    table->PutNumber("Average Amps", state.instCurrent);
-    table->PutBoolean("Spiked: ", state.spiked);
-    table->PutBoolean("Banner: ", state.bannerTripped);
-
+    table->PutNumber("Average Amps", currentSensor.getSensor());
+    table->PutBoolean("Spiked: ", currentSensor.spiked());
+    table->PutBoolean("Banner: ", debounceSensor.getSensor());
     table->PutNumber("current feeder state", state.feederState);
-    // Calculate instantaneous current
-    calcCurrent();
 }
 
 void Feeder::assignOutputs()
 {
-    state.bannerTripped = !banner.Get();
-    state.currentBanner = state.bannerTripped;
 
     if (state.feederState == FeederState::FEEDER_DISABLE) {
         motor_intake.Set(0);
@@ -126,25 +131,17 @@ void Feeder::assignOutputs()
         motor_stage.Set(0);
     }
     else if (state.feederState == FeederState::FEEDER_CURRENT_INTAKE) { //includes currrent sensing
-        if (state.bannerTripped) {
-            if (state.currentBanner && !state.previousBanner) {
-                resetDeque();
-                state.spiked = false;
+        if (debounceSensor.getSensor()) {
+            if (debounceSensor.spiked()) {
+                resetIntakeSensor();
             }
-            if (state.spiked) {
+            if (currentSensor.spiked()) {
                 motor_intake.Set(0);
                 motor_stage.Set(0);
             }
             else {
-                if (state.instCurrent > state.spikeCurrent && state.bannerTripped) {
-                    motor_intake.Set(0);
-                    motor_stage.Set(0);
-                   state.spiked = true;
-                }
-                else {
-                    motor_intake.Set(state.intakeForwardSpeed);
-                    motor_stage.Set(0);
-                }
+                motor_intake.Set(state.intakeForwardSpeed);
+                motor_stage.Set(0);
             }
         }
         else {
@@ -156,35 +153,10 @@ void Feeder::assignOutputs()
         motor_intake.Set(0);
         motor_stage.Set(0);
     }
-    state.previousBanner = state.currentBanner;
-}
-
-void Feeder::calcCurrent() {
-    state.current_cache.pop_front();
-    state.current_cache.push_back(motor_intake.GetOutputCurrent());
-
-    // Calculate average current over the cache size, or circular buffer window
-    double sum = 0;
-    for (int i = 0; i < FeederConstants::CACHE_SIZE; i++) {
-        sum += state.current_cache.at(i);
-    }
-    state.instCurrent = sum / FeederConstants::CACHE_SIZE;
-}
-
-void Feeder::resetDeque() {
-    state.current_cache.clear();
-    for (int i = 0; i < FeederConstants::CACHE_SIZE; i++) {
-        state.current_cache.push_back(0);
-    }
-    state.spiked = false;
 }
 
 void Feeder::resetState()
 {
     state.feederState = FeederState::FEEDER_DISABLE;
-
-    state.spiked = false;
-    state.previousBanner = false;
-
-    resetDeque();
+    resetIntakeSensor();
 }
