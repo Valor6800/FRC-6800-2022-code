@@ -22,7 +22,7 @@ public:
     virtual void calculate() = 0;
 
     void setGetter(std::function<T()> _lambda) { sensorLambda = _lambda; }
-    T getSensor() { return sensorLambda(); }
+    T getSensor() { return sensorLambda ? sensorLambda() : 0; }
 
 protected:
     std::function<T()> sensorLambda;
