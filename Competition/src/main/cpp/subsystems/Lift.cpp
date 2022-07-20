@@ -27,6 +27,8 @@ void Lift::init()
     rotateMotor.EnableSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse, true);
     rotateMotor.SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse, LiftConstants::rotateReverseLimit);
 
+    //rotateMotor.SetSecondaryCurrentLimit(40, 5);
+
     leadMainMotor.ConfigForwardSoftLimitThreshold(LiftConstants::extendForwardLimit);
     leadMainMotor.ConfigReverseSoftLimitThreshold(LiftConstants::extendReverseLimit);
 
@@ -48,6 +50,7 @@ void Lift::init()
     rotateMotorPidController.SetIZone(LiftConstants::rotate_kIz);
     rotateMotorPidController.SetFF(LiftConstants::rotate_kFF);
     rotateMotorPidController.SetOutputRange(LiftConstants::rotate_kMinOutput, LiftConstants::rotate_kMaxOutput);
+    
 
     rotateMotorPidController.SetSmartMotionMaxVelocity(LiftConstants::rotate_kMaxVel);
     rotateMotorPidController.SetSmartMotionMinOutputVelocity(LiftConstants::rotate_kMinVel);
@@ -71,7 +74,7 @@ void Lift::init()
     setupCommands();
 }
 
-void Lift::setController(frc::XboxController *controller)
+void Lift::setController(ValorGamepad *controller)
 {
     operatorController = controller;
 }
@@ -172,7 +175,7 @@ void Lift::setupCommands()
     //frc2::ParallelCommandGroup grabBar(liftRotateIn, liftPullUp);
 
     liftSequenceUp.AddCommands(liftExtend, liftRotateOut, liftExtend2, liftRotateIn);
-    liftSequenceDown.AddCommands(liftPullUpStop, liftMainSlowUp);
+    liftSequenceDown.AddCommands(liftPullUpStop);//, liftMainSlowUp);
 }
 
 void Lift::assessInputs()
@@ -182,28 +185,18 @@ void Lift::assessInputs()
         return;
     }
 
-    state.rightStickY = -1 * operatorController->GetRightY();
-
-    state.dPadLeftPressed = operatorController->GetPOV() == OIConstants::dpadLeft;
-    state.dPadRightPressed = operatorController->GetPOV() == OIConstants::dpadRight;
-    state.dPadDownPressed = operatorController->GetPOV() == OIConstants::dpadDown;
-    state.dPadUpPressed = operatorController->GetPOV() == OIConstants::dpadUp;
-
-    state.leftTriggerPressed = operatorController->GetLeftTriggerAxis() > LiftConstants::kDeadBandTrigger;
-    state.rightTriggerPressed = operatorController->GetRightTriggerAxis() > LiftConstants::kDeadBandTrigger;
-
-    if((std::abs(state.rightStickY) > OIConstants::kDeadbandY) && liftSequenceUp.IsScheduled()){
+    if(operatorController->rightStickYActive() && liftSequenceUp.IsScheduled()){
         liftSequenceUp.Cancel();
     }
-    if((std::abs(state.rightStickY) > OIConstants::kDeadbandY) && liftSequenceDown.IsScheduled()){
+    if(operatorController->rightStickYActive() && liftSequenceDown.IsScheduled()){
         liftSequenceDown.Cancel();
     }
 
-    if (state.dPadLeftPressed && leadMainMotor.GetSelectedSensorPosition() > LiftConstants::rotateNoLowerThreshold)
+    if (operatorController->DPadLeft() && leadMainMotor.GetSelectedSensorPosition() > LiftConstants::rotateNoLowerThreshold)
     {
         state.liftstateRotate = LiftRotateState::LIFT_ROTATE_EXTEND;
     }
-    else if (state.dPadRightPressed && leadMainMotor.GetSelectedSensorPosition() > LiftConstants::rotateNoLowerThreshold)
+    else if (operatorController->DPadRight() && leadMainMotor.GetSelectedSensorPosition() > LiftConstants::rotateNoLowerThreshold)
     {
         state.liftstateRotate = LiftRotateState::LIFT_ROTATE_RETRACT;
     }
@@ -212,11 +205,11 @@ void Lift::assessInputs()
         state.liftstateRotate = LiftRotateState::LIFT_ROTATE_DISABLED;
     }
 
-    if (std::abs(state.rightStickY) > OIConstants::kDeadbandY)
+    if (operatorController->rightStickYActive())
     {
         state.liftstateMain = LiftMainState::LIFT_MAIN_ENABLE;
     }
-    else if (state.leftTriggerPressed && state.rightTriggerPressed) {
+    else if (operatorController->leftTriggerActive() && operatorController->rightTriggerActive()) {
         state.liftstateMain = LiftMainState::LIFT_MAIN_FIRSTPOSITION;
     }
     else if(!liftSequenceUp.IsScheduled() && !liftSequenceDown.IsScheduled())
@@ -224,10 +217,10 @@ void Lift::assessInputs()
         state.liftstateMain = LiftMainState::LIFT_MAIN_DISABLED;
     }
 
-    if (state.dPadDownPressed){
+    if (operatorController->DPadDown()){
         liftSequenceDown.Schedule();
     }
-    else if (state.dPadUpPressed) {
+    else if (operatorController->DPadUp()) {
         liftSequenceUp.Schedule();
     }
 
@@ -261,6 +254,7 @@ void Lift::analyzeDashboard()
 
     table->PutNumber("Lift Main Encoder Value", getExtensionEncoderValue());
     table->PutNumber("Lift Rotate Encoder Value", getRotationEncoderValue());
+    table->PutNumber("Lift rotate current draw", rotateMotor.GetOutputCurrent());
 
     table->PutNumber("Lift Automation State", state.liftStateAutomation);
 
@@ -272,8 +266,9 @@ void Lift::analyzeDashboard()
 void Lift::assignOutputs()
 {
     if (state.liftstateRotate == LiftRotateState::LIFT_ROTATE_DISABLED &&
-    !(state.liftstateMain == LiftMainState::LIFT_MAIN_ENABLE &&
-    state.rightStickY < (-1 * OIConstants::kDeadbandY)))
+        !(state.liftstateMain == LiftMainState::LIFT_MAIN_ENABLE &&
+        operatorController->rightStickYActive() &&
+        operatorController->rightStickY() < 0))
     {
         rotateMotor.Set(0);
     }
@@ -296,11 +291,11 @@ void Lift::assignOutputs()
         leadMainMotor.Set(0);
     }
     else if (state.liftstateMain == LiftMainState::LIFT_MAIN_ENABLE) {
-        if(state.rightStickY > OIConstants::kDeadbandY){
-            leadMainMotor.Set(state.rightStickY * LiftConstants::DEFAULT_MAIN_EXTEND_SPD);
+        if (operatorController->rightStickYActive() && operatorController->rightStickY() > 0) {
+            leadMainMotor.Set(operatorController->rightStickY() * LiftConstants::DEFAULT_MAIN_EXTEND_SPD);
         }
-        else if(state.rightStickY < (-1 * OIConstants::kDeadbandY)){
-            leadMainMotor.Set(state.rightStickY * LiftConstants::DEFAULT_MAIN_RETRACT_SPD);
+        else if (operatorController->rightStickYActive() && operatorController->rightStickY() < 0) {
+            leadMainMotor.Set(operatorController->rightStickY() * LiftConstants::DEFAULT_MAIN_RETRACT_SPD);
             rotateMotor.Set(-0.2);
         }
     }

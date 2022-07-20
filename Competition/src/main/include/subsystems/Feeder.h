@@ -9,11 +9,13 @@
 
 #include "ValorSubsystem.h"
 #include "Constants.h"
-#include <deque>
+#include "ValorGamepad.h"
 
-#include <frc/XboxController.h>
-#include <rev/CANSparkMax.h>
+#include <ctre/Phoenix.h>
 #include <frc/DigitalInput.h>
+
+#include "sensors/ValorCurrentSensor.h"
+#include "sensors/ValorDebounceSensor.h"
 
 #ifndef FEEDER_H
 #define FEEDER_H
@@ -24,7 +26,7 @@ public:
     Feeder();
 
     void init();
-    void setControllers(frc::XboxController *controllerO, frc::XboxController *controllerD);
+    void setControllers(ValorGamepad *controllerO, ValorGamepad *controllerD);
 
     void assessInputs();
     void analyzeDashboard();
@@ -42,56 +44,33 @@ public:
     
     struct x
     {
-        bool driver_rightBumperPressed;
-
-        bool operator_bButtonPressed;
-        bool operator_aButtonPressed;
-
-        bool driver_leftBumperPressed;
-        bool operator_leftBumperPressed;
-
-        bool driver_rightTriggerPressed;
-        bool driver_leftTriggerPressed;
-
-        bool bannerTripped;
-        bool previousBanner;
-        bool currentBanner;
 
         bool reversed;
-
-        bool spiked;
         
         double intakeForwardSpeed;
         double intakeReverseSpeed;
-        double spikeCurrent;
 
         double feederForwardSpeedDefault;
         double feederForwardSpeedShoot;
         double feederReverseSpeed;
-        
-        //int current_cache_index;
-        //std::vector<double> current_cache;
-        std::deque<double> current_cache;
-
-        double instCurrent;
 
         FeederState feederState;
     } state;
 
-
+    void resetIntakeSensor();
 
 private:
-    frc::XboxController *driverController;
-    frc::XboxController *operatorController;
+    ValorGamepad *driverController;
+    ValorGamepad *operatorController;
 
-    rev::CANSparkMax motor_intake;
-    rev::CANSparkMax motor_stage;
+    WPI_TalonFX motor_intake;
+    WPI_TalonFX motor_stage;
+
+    ValorCurrentSensor currentSensor;
+    ValorDebounceSensor debounceSensor;
 
     frc::DigitalInput banner;
 
-    void calcCurrent();
-    
-    void resetDeque();
 };
 
 #endif

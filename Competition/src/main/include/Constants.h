@@ -117,25 +117,41 @@ namespace ShooterConstants{
     constexpr static int CAN_ID_TURRET = 12;
     constexpr static int CAN_ID_HOOD = 15;    
 
-    constexpr static double aPower = 0.0613;
-    constexpr static double bPower = -.139; //.215
-    constexpr static double cPower = .496;
-    constexpr static double aHood = 8.95;
-    constexpr static double bHood = -12.9;
-    constexpr static double cHood = 1.8;
+    //new power
+    // constexpr static double aPower_1x = 0.0485; 
+    // constexpr static double bPower_1x = -0.076;
+    // constexpr static double cPower_1x = 0.448;
+    // constexpr static double aHood_1x = 6.29;
+    // constexpr static double bHood_1x = -7.48;
+    // constexpr static double cHood_1x = .993;
+
+    //current power
+    constexpr static double aPower_1x = 0.0553; 
+    constexpr static double bPower_1x = -0.101;
+    constexpr static double cPower_1x = 0.471;
+    constexpr static double aHood_1x = 6.29;
+    constexpr static double bHood_1x = -7.48;
+    constexpr static double cHood_1x = .993;
+
+    constexpr static double aPower_2x = 0.165;
+    constexpr static double bPower_2x = -0.432;
+    constexpr static double cPower_2x = 0.704;
+    constexpr static double aHood_2x = 18.7;
+    constexpr static double bHood_2x = -41.2;
+    constexpr static double cHood_2x = 24.6;
     
     constexpr static double limelightTurnKP = (.3 / 25.445) * 1.25;
     constexpr static double limelightAngle = 50;
     constexpr static double hubHeight = 2.64;
     constexpr static double limelightHeight = .6075;
     
-    constexpr static double flywheelKP1 = 0.1;
+    constexpr static double flywheelKP1 = 0.09025; //0.088 -> 0.091
     constexpr static double flywheelKI1 = 0;
     constexpr static double flywheelKD1 = 0;
     constexpr static double flywheelKIZ1 = 0;
     constexpr static double flywheelKFF1 = 0.04;
 
-    constexpr static double flywheelKP0 = 0.1  ; //.25
+    constexpr static double flywheelKP0 = 0.0905; //0.088 -> 0.091
     constexpr static double flywheelKI0 = 0;
     constexpr static double flywheelKD0 = 0;
     constexpr static double flywheelKIZ0 = 0;
@@ -150,8 +166,8 @@ namespace ShooterConstants{
 
     constexpr static double flywheelPrimedValue = 0.46;
     constexpr static double flywheelAutoValue = 0.405; //can change to .4
-    constexpr static double flywheelDefaultValue = 0.42; //.375
-    constexpr static double flywheelPoopValue = 0.25;
+    constexpr static double flywheelDefaultValue = 0.45; //.375
+    constexpr static double flywheelPoopValue = 0.3;
     constexpr static double flywheelLaunchpadValue = .455;    
     
     constexpr static double flywheelSpeeds[] = {.372, .38125, .372}; //.387, .39125
@@ -174,10 +190,10 @@ namespace ShooterConstants{
     constexpr static double hoodKIZ = 0;
     constexpr static double hoodKFF = 0.000156 * .5;
 
-    constexpr static double hoodMaxV = 8000;
+    constexpr static double hoodMaxV = 10000; //8000
     constexpr static double hoodMinV = 0;
-    constexpr static double hoodMaxAccel = hoodMaxV * 1;
-    constexpr static double hoodAllowedError = 0;
+    constexpr static double hoodMaxAccel = hoodMaxV * 4; // *1
+    constexpr static double hoodAllowedError = 0.2;
 
     constexpr static double hoodTop = 5;
    // constexpr static double hoodAuto = 6;
@@ -207,8 +223,8 @@ namespace ShooterConstants{
     constexpr static double homePositionMid = 90;
     constexpr static double homePositionLeft = 180;
     constexpr static double homePositionRight = 0;
-    constexpr static double turretLimitLeft = 180;
-    constexpr static double turretLimitRight = 0;
+    constexpr static double turretLimitLeft = 180 + 10.5;
+    constexpr static double turretLimitRight = 0 - 7;
 
     constexpr static double turretRotateLiftThreshold = 20000; // lowered from 64500
     constexpr static double hubX = 0;
@@ -221,20 +237,20 @@ namespace ShooterConstants{
 }
 
 namespace FeederConstants{
-    constexpr static int MOTOR_INTAKE_CAN_ID = 9;
+    constexpr static int MOTOR_INTAKE_CAN_ID = 9;    //PDH slot 15
     constexpr static int MOTOR_STAGE_CAN_ID = 10;
 
     constexpr static int BANNER_DIO_PORT = 5;
 
-    constexpr static double DEFAULT_INTAKE_SPEED_FORWARD = 0.9;
-    constexpr static double DEFAULT_INTAKE_SPEED_REVERSE = -0.9;
+    constexpr static double DEFAULT_INTAKE_SPEED_FORWARD = 0.7;
+    constexpr static double DEFAULT_INTAKE_SPEED_REVERSE = -0.7;
 
     constexpr static double DEFAULT_FEEDER_SPEED_FORWARD_DEFAULT = 0.5;
-    constexpr static double DEFAULT_FEEDER_SPEED_FORWARD_SHOOT = 0.98;
+    constexpr static double DEFAULT_FEEDER_SPEED_FORWARD_SHOOT = 0.9;
     constexpr static double DEFAULT_FEEDER_SPEED_REVERSE = -1.0;
 
-    constexpr static int CACHE_SIZE = 25;
-    constexpr static double JAM_CURRENT = 30;
+    constexpr static int CACHE_SIZE = 20;
+    constexpr static double JAM_CURRENT = 22;
 }
 
 namespace MathConstants{
@@ -252,7 +268,7 @@ namespace LiftConstants{
 
     constexpr static int MAIN_FIRST_POSITION = 62000;
     constexpr static int MAIN_SECOND_POSITION = 78500;
-    constexpr static int MAIN_THIRD_POSITION = 103000;
+    constexpr static int MAIN_THIRD_POSITION = 98000;
     constexpr static int MAIN_DOWN_POSITION = 125;
     constexpr static int MAIN_BOTTOM_POSITION = 0;
     constexpr static int MAIN_SLOW_UP_POSITION = 5500;
@@ -263,7 +279,7 @@ namespace LiftConstants{
     constexpr static double rotateForwardLimit = 40;
     constexpr static double rotateReverseLimit = 0;
 
-    constexpr static double extendForwardLimit = 103000;
+    constexpr static double extendForwardLimit = 98000;
     constexpr static double extendReverseLimit = 125;
 
     constexpr static double pivotGearRatio = 1 / 95.67;

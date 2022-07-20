@@ -29,6 +29,9 @@ public:
     void analyzeDashboard();
     void assignOutputs();
 
+    void disableWrapAround();
+    void enableWrapAround();
+
     struct x
     {
         double target;
@@ -45,6 +48,7 @@ public:
         double cachedVT;
 
         double cachedTurretPos;
+        double destinationTurretHeading;
 
     } state;
 
