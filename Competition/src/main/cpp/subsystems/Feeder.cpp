@@ -12,12 +12,21 @@
 #include "subsystems/Feeder.h"
 #include <iostream>
 
+#define INTAKE_SPD_FORWARD 0.7
+#define INTAKE_SPD_REVERSE -0.7
+#define FEEDER_SPD_FORWARD 0.5
+#define FEEDER_SPD_SHOOT   0.9
+#define FEEDER_SPD_REVERSE -1.0
+
+#define CACHE_SIZE 20
+#define JAM_CURRENT 22
+
 Feeder::Feeder() : ValorSubsystem(),
                            driverController(NULL),
                            operatorController(NULL),
-                           motor_intake(FeederConstants::MOTOR_INTAKE_CAN_ID, "baseCAN"),
-                           motor_stage(FeederConstants::MOTOR_STAGE_CAN_ID, "baseCAN"),
-                           banner(FeederConstants::BANNER_DIO_PORT)
+                           intakeController(CANIDs::INTAKE, Coast, false, "baseCAN"),
+                           stageController(CANIDs::STAGE, Coast, true, "baseCAN"),
+                           banner(DIOPorts::BANNER)
 {
     frc2::CommandScheduler::GetInstance().RegisterSubsystem(this);
     init();
@@ -26,33 +35,21 @@ Feeder::Feeder() : ValorSubsystem(),
 void Feeder::init()
 {
     initTable("Feeder");
-    motor_intake.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
-    motor_intake.SetNeutralMode(ctre::phoenix::motorcontrol::Coast);
-    motor_intake.SetInverted(false);
-    motor_intake.EnableVoltageCompensation(false);
-    motor_intake.ConfigVoltageCompSaturation(10);
-    motor_intake.ConfigSupplyCurrentLimit(SupplyCurrentLimitConfiguration(true, 60, 80, .75)); //potentially could do 40 60
-
-    motor_stage.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
-    motor_stage.SetNeutralMode(ctre::phoenix::motorcontrol::Coast);
-    motor_stage.SetInverted(true);
-    motor_stage.EnableVoltageCompensation(true);
-    motor_stage.ConfigVoltageCompSaturation(10);
 
     table->PutBoolean("Reverse Feeder?", false);
-    table->PutNumber("Intake Reverse Speed", FeederConstants::DEFAULT_INTAKE_SPEED_REVERSE);
-    table->PutNumber("Feeder Reverse Speed", FeederConstants::DEFAULT_FEEDER_SPEED_REVERSE);
-    table->PutNumber("Intake Forward Speed", FeederConstants::DEFAULT_INTAKE_SPEED_FORWARD);
-    table->PutNumber("Feeder Forward Speed Default", FeederConstants::DEFAULT_FEEDER_SPEED_FORWARD_DEFAULT);
-    table->PutNumber("Feeder Forward Speed Shoot", FeederConstants::DEFAULT_FEEDER_SPEED_FORWARD_SHOOT);
-    table->PutNumber("Intake Spike Current", FeederConstants::JAM_CURRENT);
+    table->PutNumber("Intake Reverse Speed", INTAKE_SPD_REVERSE);
+    table->PutNumber("Intake Forward Speed", INTAKE_SPD_FORWARD);
+    table->PutNumber("Intake Spike Current", JAM_CURRENT);
+    table->PutNumber("Feeder Reverse Speed", FEEDER_SPD_REVERSE);
+    table->PutNumber("Feeder Forward Speed Default", FEEDER_SPD_FORWARD);
+    table->PutNumber("Feeder Forward Speed Shoot", FEEDER_SPD_SHOOT);
 
     table->PutNumber("Average Amps", 0);
     table->PutBoolean("Spiked: ", 0);
     table->PutBoolean("Banner: ", 0);
     
     resetState();
-    currentSensor.setGetter([this]() { return motor_intake.GetOutputCurrent(); });
+    currentSensor.setGetter([this]() { return intakeController.getCurrent(); });
     debounceSensor.setGetter([this]() { return !banner.Get(); });
     
 }
@@ -99,11 +96,12 @@ void Feeder::analyzeDashboard()
     debounceSensor.calculate();
 
     state.reversed = table->GetBoolean("Reverse Feeder?", false);
-    state.intakeReverseSpeed = table->GetNumber("Intake Reverse Speed", FeederConstants::DEFAULT_INTAKE_SPEED_REVERSE);
-    state.feederReverseSpeed = table->GetNumber("Feeder Reverse Speed", FeederConstants::DEFAULT_FEEDER_SPEED_REVERSE);
-    state.intakeForwardSpeed = table->GetNumber("Intake Forward Speed", FeederConstants::DEFAULT_INTAKE_SPEED_FORWARD);
-    state.feederForwardSpeedDefault = table->GetNumber("Feeder Forward Speed Default", FeederConstants::DEFAULT_FEEDER_SPEED_FORWARD_DEFAULT);
-    state.feederForwardSpeedShoot = table->GetNumber("Feeder Forward Speed Shoot", FeederConstants::DEFAULT_FEEDER_SPEED_FORWARD_SHOOT);
+
+    state.intakeReverseSpeed = table->GetNumber("Intake Reverse Speed", INTAKE_SPD_REVERSE);
+    state.intakeForwardSpeed = table->GetNumber("Intake Forward Speed", INTAKE_SPD_FORWARD);
+    state.feederReverseSpeed = table->GetNumber("Feeder Reverse Speed", FEEDER_SPD_REVERSE);
+    state.feederForwardSpeedDefault = table->GetNumber("Feeder Forward Speed Default", FEEDER_SPD_FORWARD);
+    state.feederForwardSpeedShoot = table->GetNumber("Feeder Forward Speed Shoot", FEEDER_SPD_SHOOT);
 
     table->PutNumber("Average Amps", currentSensor.getSensor());
     table->PutBoolean("Spiked: ", currentSensor.spiked());
@@ -115,20 +113,20 @@ void Feeder::assignOutputs()
 {
 
     if (state.feederState == FeederState::FEEDER_DISABLE) {
-        motor_intake.Set(0);
-        motor_stage.Set(0);
+        intakeController.setPower(0);
+        stageController.setPower(0);
     }
     else if (state.feederState == FeederState::FEEDER_SHOOT) {
-        motor_intake.Set(state.intakeForwardSpeed);
-        motor_stage.Set(state.feederForwardSpeedShoot);
+        intakeController.setPower(state.intakeForwardSpeed);
+        stageController.setPower(state.feederForwardSpeedShoot);
     }
     else if (state.feederState == Feeder::FEEDER_REVERSE) {
-        motor_intake.Set(state.intakeReverseSpeed);
-        motor_stage.Set(state.feederReverseSpeed);
+        intakeController.setPower(state.intakeReverseSpeed);
+        stageController.setPower(state.feederReverseSpeed);
     }
     else if (state.feederState == Feeder::FEEDER_REGULAR_INTAKE){
-        motor_intake.Set(state.intakeForwardSpeed);
-        motor_stage.Set(0);
+        intakeController.setPower(state.intakeForwardSpeed);
+        stageController.setPower(0);
     }
     else if (state.feederState == FeederState::FEEDER_CURRENT_INTAKE) { //includes currrent sensing
         if (debounceSensor.getSensor()) {
@@ -136,22 +134,22 @@ void Feeder::assignOutputs()
                 resetIntakeSensor();
             }
             if (currentSensor.spiked()) {
-                motor_intake.Set(0);
-                motor_stage.Set(0);
+                intakeController.setPower(0);
+                stageController.setPower(0);
             }
             else {
-                motor_intake.Set(state.intakeForwardSpeed);
-                motor_stage.Set(0);
+                intakeController.setPower(state.intakeForwardSpeed);
+                stageController.setPower(0);
             }
         }
         else {
-            motor_intake.Set(state.intakeForwardSpeed);
-            motor_stage.Set(state.feederForwardSpeedDefault);
+            intakeController.setPower(state.intakeForwardSpeed);
+            stageController.setPower(state.feederForwardSpeedDefault);
         }
     }
     else {
-        motor_intake.Set(0);
-        motor_stage.Set(0);
+        intakeController.setPower(0);
+        stageController.setPower(0);
     }
 }
 

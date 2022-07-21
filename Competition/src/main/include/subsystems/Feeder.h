@@ -10,8 +10,8 @@
 #include "ValorSubsystem.h"
 #include "Constants.h"
 #include "ValorGamepad.h"
+#include "controllers/ValorFalconController.h"
 
-#include <ctre/Phoenix.h>
 #include <frc/DigitalInput.h>
 
 #include "sensors/ValorCurrentSensor.h"
@@ -63,8 +63,8 @@ private:
     ValorGamepad *driverController;
     ValorGamepad *operatorController;
 
-    WPI_TalonFX motor_intake;
-    WPI_TalonFX motor_stage;
+    ValorFalconController intakeController;
+    ValorFalconController stageController;
 
     ValorCurrentSensor currentSensor;
     ValorDebounceSensor debounceSensor;
