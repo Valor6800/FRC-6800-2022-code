@@ -57,26 +57,42 @@ void TurretTracker::assignOutputs() {
         // 0.75 = limeligh KP
         state.target = (-state.cachedTx * 0.75) + turretPos;
 
-        if(shooter->driverController->leftTriggerActive()) {
-            state.target += 15;
-        }
-
-        // state.target = -1 * robotHeading + state.cachedTurretPos;
-        // atan2(drivetrain->getKinematics().ToChassisSpeeds().vx.to(<double>()), drivetrain->getPose_m().X());
-
         state.cachedHeading = robotHeading;
         state.cachedX = x;
         state.cachedY = y;
         state.cachedTx = tx;
         state.cachedTurretPos = turretPos;
         
-        state.destinationTurretHeading = robotHeading + turretPos - 90 - tx;
+        state.destinationTurretHeading = robotHeading + turretPos - 90 - state.cachedTx;
     }
     else {
         if (table->GetBoolean("Use Turret Shoot", true))
             state.target = state.destinationTurretHeading - robotHeading + 90 + tx;
         else
             state.target = turretPos;
+    }
+
+    // Super Poop
+    if (shooter->driverController->leftTriggerActive()) {
+        double wrappedExistingHeading = state.destinationTurretHeading;
+
+        // Wrap to positive numbers
+        if (wrappedExistingHeading < 0)
+            wrappedExistingHeading += 360;
+
+        // Case structure for robot locations on the field
+        double superPoopHeading = 90;
+        if (wrappedExistingHeading <= 45)
+            superPoopHeading += 2 * 90.0 / 4;
+        else if (wrappedExistingHeading > 45 && wrappedExistingHeading <= 135)
+            superPoopHeading += 1 * 90.0 / 4;
+        else if (wrappedExistingHeading > 135 && wrappedExistingHeading <= 225)
+            superPoopHeading += 3 * 90.0 / 4;
+        else
+            superPoopHeading += 90;
+        
+        // Convert heading to turret angle
+        state.target = superPoopHeading - robotHeading + 90 + state.cachedTx;
     }
 
     if (state.target < -90) {
