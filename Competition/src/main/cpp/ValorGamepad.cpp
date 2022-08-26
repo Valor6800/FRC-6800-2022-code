@@ -28,9 +28,16 @@ void ValorGamepad::setDeadbandY(double deadband)
     deadbandY = deadband;
 }
 
+// Get the sign of an input
+template <typename T> int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
 double ValorGamepad::deadband(double input, double deadband, int polynomial)
 {
-    return std::fabs(input) > deadband ? std::pow(input, polynomial) : 0;
+    // If input is negative and polynomial is even, output would be positive which is incorrect
+    // Therefore if polynomial is even, multiply pow by the sign of the input
+    return std::fabs(input) > deadband ? ((polynomial % 2 == 0 ? sgn(input) : 1) * std::pow(input, polynomial)) : 0;
 }
 
 double ValorGamepad::leftStickX(int polynomial)
