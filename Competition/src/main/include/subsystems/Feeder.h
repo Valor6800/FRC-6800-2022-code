@@ -16,6 +16,7 @@
 
 #include "sensors/ValorCurrentSensor.h"
 #include "sensors/ValorDebounceSensor.h"
+#include <frc2/command/InstantCommand.h>
 
 #ifndef FEEDER_H
 #define FEEDER_H

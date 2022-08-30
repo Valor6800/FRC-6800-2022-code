@@ -7,7 +7,7 @@
 
 #include "RobotContainer.h"
 
-RobotContainer::RobotContainer() : m_auto(&m_drivetrain, &m_shooter, &m_feeder, &m_turretTracker) {
+RobotContainer::RobotContainer() : points(ValorPoints::ALLIANCE_COLOR::RED), testAuto(&points, &m_drivetrain, &m_feeder), m_auto(&m_drivetrain, &m_shooter, &m_feeder, &m_turretTracker) {
     ConfigureButtonBindings();
     m_shooter.setDrivetrain(&m_drivetrain);
     m_turretTracker.setDrivetrain(&m_drivetrain);

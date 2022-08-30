@@ -1,42 +1,41 @@
-#include <frc/geometry/Translation2d.h>
-#include <frc/kinematics/DifferentialDriveWheelSpeeds.h>
-#include <frc/controller/SimpleMotorFeedforward.h>
-#include <frc/kinematics/DifferentialDriveKinematics.h>
-#include <frc/trajectory/constraint/DifferentialDriveVoltageConstraint.h>
+#include "subsystems/Drivetrain.h"
+#include "subsystems/Feeder.h"
+#include "auto/ValorPoints.h"
+
 #include <frc/trajectory/Trajectory.h>
 #include <frc/trajectory/TrajectoryGenerator.h>
-#include <frc/smartdashboard/SendableChooser.h>
-#include <frc/smartdashboard/SmartDashboard.h>
-
-#include <frc2/command/SwerveControllerCommand.h>
-#include <frc2/command/Command.h>
 #include <frc2/command/InstantCommand.h>
-#include <frc2/command/SequentialCommandGroup.h>
-#include <frc2/command/ParallelCommandGroup.h>
-
-#include <frc2/command/WaitCommand.h>
-
-#include "subsystems/Drivetrain.h"
-#include "subsystems/Shooter.h"
-#include "subsystems/Feeder.h"
-#include "subsystems/TurretTracker.h"
 
 #ifndef VALOR_AUTO_H
 #define VALOR_AUTO_H
 
 class ValorAuto {
     public:
-        ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder, TurretTracker *_turretTracker);
+        ValorAuto(ValorPoints*, Drivetrain*, Feeder*);
+    protected:
 
-        frc2::Command* getCurrentAuto();
+        frc::Trajectory createTrajectory(std::vector<frc::Pose2d>& poses, bool reversed = false);
+        frc2::SwerveControllerCommand<4> createTrajectoryCommand(frc::Trajectory);
+
+        frc2::InstantCommand getSetStateFeederCommand(Feeder::FeederState);
+
+        void test();
 
     private:
+        static frc::TrajectoryConfig config;
+
+        frc::ProfiledPIDController<units::radians> thetaController{
+                DriveConstants::KPT,
+                DriveConstants::KIT,
+                DriveConstants::KDT,
+                frc::ProfiledPIDController<units::radians>::Constraints(
+                    units::angular_velocity::radians_per_second_t{SwerveConstants::AUTO_MAX_ROTATION_RPS},
+                    units::angular_acceleration::radians_per_second_squared_t{SwerveConstants::AUTO_MAX_ROTATION_ACCEL_RPSS})
+        };
+
+        ValorPoints *points;
         Drivetrain *drivetrain;
-        Shooter *shooter;
         Feeder *feeder;
-        TurretTracker *turretTracker;
-        frc::SendableChooser<frc2::Command*> m_chooser;
-        
 };
 
 #endif
