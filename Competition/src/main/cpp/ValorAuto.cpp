@@ -402,7 +402,18 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         {},
         trenchEndBlue,
         config);
-    
+
+    std::vector<frc::Pose2d> points;
+    points.push_back(frc::Pose2d{0_m, 0_m, frc::Rotation2d(0_deg)});
+    points.push_back(frc::Pose2d{2_m, 0_m, frc::Rotation2d(90_deg)});
+    points.push_back(frc::Pose2d{2_m, 2_m, frc::Rotation2d(180_deg)});
+    points.push_back(frc::Pose2d{0_m, 2_m, frc::Rotation2d(270_deg)});
+    points.push_back(frc::Pose2d{0_m, 0_m, frc::Rotation2d(0_deg)});
+
+    auto testHolonomic = frc::TrajectoryGenerator::GenerateTrajectory(
+        points,
+        config);
+
     frc2::SwerveControllerCommand<4> cmd_move_moveBugsRed(
         moveBugsRed,
         [&] () { return drivetrain->getPose_m(); },
@@ -865,6 +876,17 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         [this] (auto states) { drivetrain->setModuleStates(states); },
         {drivetrain}
     );
+
+    frc2::SwerveControllerCommand<4> cmd_testHolonomic(
+        testHolonomic,
+        [&] () { return drivetrain->getPose_m(); },
+        drivetrain->getKinematics(),
+        frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
+        frc2::PIDController(DriveConstants::KPY, DriveConstants::KIY, DriveConstants::KDY),
+        thetaController,
+        [this] (auto states) { drivetrain->setModuleStates(states); },
+        {drivetrain}
+    );
     
 
     frc2::SequentialCommandGroup *shoot3Red = new frc2::SequentialCommandGroup();
@@ -1220,6 +1242,9 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     cmd_shooterAuto
     );
 
+    frc2::SequentialCommandGroup *testHolonomicSquare = new frc2::SequentialCommandGroup();
+    testHolonomicSquare->AddCommands(cmd_testHolonomic);
+
     m_chooser.AddOption("RED 2 ball", shoot2Red);
     m_chooser.AddOption("Blue 2 ball", shoot2Blue);
 
@@ -1241,6 +1266,9 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     m_chooser.AddOption("BLUE 5 ball auto", shoot5Blue);
 
     m_chooser.SetDefaultOption("RED 2 ball", shoot2Red);
+
+
+    m_chooser.AddOption("Test Holonomic", testHolonomicSquare);
 
     frc::SmartDashboard::PutData(&m_chooser);
 }
