@@ -223,7 +223,7 @@ namespace ShooterConstants{
     constexpr static double homePositionMid = 90;
     constexpr static double homePositionLeft = 180;
     constexpr static double homePositionRight = 0;
-    constexpr static double turretLimitLeft = 180 + 10.5;
+    constexpr static double turretLimitLeft = 180 + 8.5;
     constexpr static double turretLimitRight = 0 - 7;
 
     constexpr static double turretRotateLiftThreshold = 20000; // lowered from 64500
