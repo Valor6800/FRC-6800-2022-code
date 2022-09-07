@@ -142,6 +142,8 @@ public:
 
      std::shared_ptr<nt::NetworkTable> limeTable;
      std::shared_ptr<nt::NetworkTable> liftTable;
+     std::shared_ptr<nt::NetworkTable> feederTable;
+
 
      Drivetrain *odom;
 

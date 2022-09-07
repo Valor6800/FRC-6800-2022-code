@@ -97,7 +97,7 @@ namespace SwerveConstants {
     constexpr static double AUTO_MAX_ACCEL_MPSS = AUTO_MAX_SPEED_MPS * .6; // * 1
     constexpr static double DRIVE_SLOW_SPEED_MPS = 1;
 
-    constexpr static double ROTATION_MAX_SPEED_RPS = 2*M_PI;// DRIVE_MAX_SPEED_MPS / std::hypot(module_diff / 2, module_diff / 2);
+    constexpr static double ROTATION_MAX_SPEED_RPS = 4 *M_PI;// DRIVE_MAX_SPEED_MPS / std::hypot(module_diff / 2, module_diff / 2);
     constexpr static double AUTO_MAX_ROTATION_RPS = 4 * M_PI;
     constexpr static double AUTO_MAX_ROTATION_ACCEL_RPSS = AUTO_MAX_ROTATION_RPS * .5; // * 1
     constexpr static double ROTATION_SLOW_SPEED_RPS = 1*M_PI;
@@ -227,6 +227,8 @@ namespace ShooterConstants{
     constexpr static double turretLimitRight = 0 - 7;
 
     constexpr static double turretRotateLiftThreshold = 20000; // lowered from 64500
+    constexpr static double turretRotateIntakeThreshold = 0; fixme // set to intake rotate up threshold
+    
     constexpr static double hubX = 0;
     constexpr static double hubY = 0;
 
@@ -251,6 +253,8 @@ namespace FeederConstants{
 
     constexpr static int CACHE_SIZE = 20;
     constexpr static double JAM_CURRENT = 22;
+
+    
 }
 
 namespace MathConstants{

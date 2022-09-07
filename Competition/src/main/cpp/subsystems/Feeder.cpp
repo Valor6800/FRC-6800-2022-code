@@ -17,6 +17,9 @@ Feeder::Feeder() : ValorSubsystem(),
                            operatorController(NULL),
                            motor_intake(FeederConstants::MOTOR_INTAKE_CAN_ID, "baseCAN"),
                            motor_stage(FeederConstants::MOTOR_STAGE_CAN_ID, "baseCAN"),
+                           motor_rotateMain(FeederConstants::MOTOR_ROTATE_MAIN_CAN_ID, "baseCAN"),
+                           motor_rotateFollow(FeederConstants::MOTOR_ROTATE_FOLLOW_CAN_ID, "baseCAN"),
+
                            banner(FeederConstants::BANNER_DIO_PORT)
 {
     frc2::CommandScheduler::GetInstance().RegisterSubsystem(this);
@@ -38,6 +41,14 @@ void Feeder::init()
     motor_stage.SetInverted(true);
     motor_stage.EnableVoltageCompensation(true);
     motor_stage.ConfigVoltageCompSaturation(10);
+
+    motor_rotateMain.SetInverted(false);
+    motor_rotateMain.SetNeutralMode(Brake);
+
+    motor_rotateFollow.SetInverted(true);
+    motor_rotateFollow.SetNeutralMode(Brake);
+    motor_rotateFollow.Follow(motor_rotateMain);
+    
 
     table->PutBoolean("Reverse Feeder?", false);
     table->PutNumber("Intake Reverse Speed", FeederConstants::DEFAULT_INTAKE_SPEED_REVERSE);
@@ -79,6 +90,9 @@ void Feeder::assessInputs()
         state.feederState = FeederState::FEEDER_SHOOT; //intake and feeder run
         resetIntakeSensor();
     }
+    else if (driverController->GetBButton()) {
+        state.feederState = FeederState::FEEDER_RETRACT; //Set Intake rotate target to upper setpoint
+    }
     else if (driverController->GetLeftBumper()) {
         state.feederState = FeederState::FEEDER_REVERSE;
         resetIntakeSensor();
@@ -117,10 +131,14 @@ void Feeder::assignOutputs()
     if (state.feederState == FeederState::FEEDER_DISABLE) {
         motor_intake.Set(0);
         motor_stage.Set(0);
+        fixme motor_rotateRight.Set(0);// set rotate down
     }
     else if (state.feederState == FeederState::FEEDER_SHOOT) {
         motor_intake.Set(state.intakeForwardSpeed);
         motor_stage.Set(state.feederForwardSpeedShoot);
+    }
+    else if (state.feederState == FeederState::FEEDER_RETRACT){
+        fixme // set rotation to be up;
     }
     else if (state.feederState == Feeder::FEEDER_REVERSE) {
         motor_intake.Set(state.intakeReverseSpeed);

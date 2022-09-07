@@ -169,7 +169,15 @@ void Shooter::assessInputs()
     }
     
     //Turret
-    if (operatorController->leftStickXActive()) {
+    if (feederTable->GetNumber("Intake Encoder Value", 0) > ShooterConstants::turretRotateIntakeThreshold) {
+        if (turretEncoder.GetPosition() > ShooterConstants::homePositionMid) {
+            state.turretState = TurretState::TURRET_HOME_LEFT;
+        }
+        else {
+            state.turretState == TurretState::TURRET_HOME_RIGHT;
+        }
+    }
+    else if (operatorController->leftStickXActive()) {
         state.turretState = TurretState::TURRET_MANUAL; // Operator control
     }
     else if (operatorController->GetYButton() || driverController->GetBButton()) {
@@ -247,13 +255,16 @@ void Shooter::analyzeDashboard()
     state.hoodLow = table->GetNumber("Hood Bottom Position", ShooterConstants::hoodBottom);
     state.hoodHigh = table->GetNumber("Hood Top Position", ShooterConstants::hoodTop);
 
-
+    
+    
     if (liftTable->GetNumber("Lift Main Encoder Value", 0) > ShooterConstants::turretRotateLiftThreshold) {
         state.turretState = TurretState::TURRET_HOME_LEFT;
         limelightTrack(false);
         state.hoodState = HoodState::HOOD_DOWN;
         state.flywheelState = FlywheelState::FLYWHEEL_DISABLE;
     }
+
+    
 
     if (state.turretState == TurretState::TURRET_TRACK && state.lastTurretState != TurretState::TURRET_TRACK){
         limelightTrack(true);
