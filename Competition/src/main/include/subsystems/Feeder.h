@@ -39,7 +39,8 @@ public:
         FEEDER_REVERSE,
         FEEDER_SHOOT,
         FEEDER_CURRENT_INTAKE,
-        FEEDER_REGULAR_INTAKE
+        FEEDER_REGULAR_INTAKE,
+        FEEDER_RETRACT
     };
     
     struct x
@@ -65,6 +66,12 @@ private:
 
     WPI_TalonFX motor_intake;
     WPI_TalonFX motor_stage;
+    WPI_TalonFX motor_rotateRight;
+    WPI_TalonFX motor_rotateLeft; 
+    
+    //fixme // create motor group if needed
+
+
 
     ValorCurrentSensor currentSensor;
     ValorDebounceSensor debounceSensor;
