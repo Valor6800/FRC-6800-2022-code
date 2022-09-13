@@ -227,7 +227,7 @@ namespace ShooterConstants{
     constexpr static double turretLimitRight = 0 - 7;
 
     constexpr static double turretRotateLiftThreshold = 20000; // lowered from 64500
-    constexpr static double turretRotateIntakeThreshold = 0; fixme // set to intake rotate up threshold
+    constexpr static double turretRotateIntakeThreshold = 12000;  // fixme set to intake rotate up threshold
     
     constexpr static double hubX = 0;
     constexpr static double hubY = 0;
@@ -241,6 +241,9 @@ namespace ShooterConstants{
 namespace FeederConstants{
     constexpr static int MOTOR_INTAKE_CAN_ID = 9;    //PDH slot 15
     constexpr static int MOTOR_STAGE_CAN_ID = 10;
+
+    constexpr static int MOTOR_ROTATE_MAIN_CAN_ID = 20;
+    constexpr static int MOTOR_ROTATE_FOLLOW_CAN_ID = 21;
 
     constexpr static int BANNER_DIO_PORT = 5;
 
