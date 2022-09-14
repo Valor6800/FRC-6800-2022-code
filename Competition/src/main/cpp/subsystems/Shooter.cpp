@@ -169,7 +169,7 @@ void Shooter::assessInputs()
     }
     
     //Turret
-    if (feederTable->GetNumber("Intake Encoder Value", 0) > ShooterConstants::turretRotateIntakeThreshold) {
+    if (feederTable->GetNumber("Intake Encoder Value", 0) < FeederConstants::rotateForwardLimit / 2) {
         if (turretEncoder.GetPosition() > ShooterConstants::homePositionMid) {
             state.turretState = TurretState::TURRET_HOME_LEFT;
         }
