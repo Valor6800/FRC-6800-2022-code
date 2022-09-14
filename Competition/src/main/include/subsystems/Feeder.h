@@ -17,6 +17,9 @@
 #include "sensors/ValorCurrentSensor.h"
 #include "sensors/ValorDebounceSensor.h"
 
+#include <frc2/command/FunctionalCommand.h>
+
+
 #ifndef FEEDER_H
 #define FEEDER_H
 
@@ -55,10 +58,12 @@ public:
         double feederForwardSpeedShoot;
         double feederReverseSpeed;
 
+
         FeederState feederState;
     } state;
 
     void resetIntakeSensor();
+
 
 private:
     ValorGamepad *driverController;
@@ -69,7 +74,6 @@ private:
     WPI_TalonFX motor_rotateMain;
     WPI_TalonFX motor_rotateFollow;
     
-    //fixme // create motor group if needed
 
 
 
