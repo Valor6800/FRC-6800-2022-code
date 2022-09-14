@@ -42,20 +42,18 @@ void Feeder::init()
     motor_stage.EnableVoltageCompensation(true);
     motor_stage.ConfigVoltageCompSaturation(10);
 
-    // motor_rotateMain.SetInverted(false);
-    // motor_rotateMain.SetNeutralMode(Brake);
+    
 
-    // motor_rotateFollow.SetInverted(true);
-    // motor_rotateFollow.SetNeutralMode(Brake);
-    // motor_rotateFollow.Follow(motor_rotateMain);
-    motor_rotateMain.ConfigForwardSoftLimitThreshold(LiftConstants::extendForwardLimit);
-    motor_rotateMain.ConfigReverseSoftLimitThreshold(LiftConstants::extendReverseLimit);
+    
+    motor_rotateMain.ConfigForwardSoftLimitThreshold(FeederConstants::rotateForwardLimit);
+    motor_rotateMain.ConfigReverseSoftLimitThreshold(FeederConstants::rotateReverseLimit);
 
     motor_rotateMain.ConfigForwardSoftLimitEnable(true);
     motor_rotateMain.ConfigReverseSoftLimitEnable(true);
 
     motor_rotateMain.SetSelectedSensorPosition(0);
-    motor_rotateMain.SetInverted(true);
+    motor_rotateMain.SetInverted(false);
+    motor_rotateFollow.SetInverted(true);
     motor_rotateFollow.Follow(motor_rotateMain);   
 
     motor_rotateMain.SetNeutralMode(ctre::phoenix::motorcontrol::Brake);
@@ -64,12 +62,13 @@ void Feeder::init()
     motor_rotateMain.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
     motor_rotateMain.ConfigAllowableClosedloopError(0, 0);
     motor_rotateMain.Config_IntegralZone(0, 0);
-    motor_rotateMain.Config_kF(0, LiftConstants::main_KF);
-    motor_rotateMain.Config_kD(0, LiftConstants::main_KD);
-    motor_rotateMain.Config_kI(0, LiftConstants::main_KI);
-    motor_rotateMain.Config_kP(0, LiftConstants::main_KP);
-    motor_rotateMain.ConfigMotionAcceleration(LiftConstants::MAIN_MOTION_ACCELERATION);
-    motor_rotateMain.ConfigMotionCruiseVelocity(LiftConstants::MAIN_MOTION_CRUISE_VELOCITY);
+
+    motor_rotateMain.Config_kF(0, FeederConstants::main_KF);
+    motor_rotateMain.Config_kD(0, FeederConstants::main_KD);
+    motor_rotateMain.Config_kI(0, FeederConstants::main_KI);
+    motor_rotateMain.Config_kP(0, FeederConstants::main_KP);
+    motor_rotateMain.ConfigMotionAcceleration(FeederConstants::MAIN_MOTION_ACCELERATION);
+    motor_rotateMain.ConfigMotionCruiseVelocity(FeederConstants::MAIN_MOTION_CRUISE_VELOCITY);
 
     table->PutBoolean("Reverse Feeder?", false);
     table->PutNumber("Intake Reverse Speed", FeederConstants::DEFAULT_INTAKE_SPEED_REVERSE);
@@ -112,7 +111,7 @@ void Feeder::assessInputs()
         resetIntakeSensor();
     }
     else if (driverController->GetBButton()) {
-        state.feederState = FeederState::FEEDER_RETRACT; //Set Intake rotate target to upper setpoint
+        state.feederState = FeederState::FEEDER_RETRACT; //Set Intake rotate  to upper setpoint
     }
     else if (driverController->GetLeftBumper()) {
         state.feederState = FeederState::FEEDER_REVERSE;
@@ -144,6 +143,7 @@ void Feeder::analyzeDashboard()
     table->PutBoolean("Spiked: ", currentSensor.spiked());
     table->PutBoolean("Banner: ", debounceSensor.getSensor());
     table->PutNumber("current feeder state", state.feederState);
+
 }
 
 void Feeder::assignOutputs()
@@ -152,14 +152,14 @@ void Feeder::assignOutputs()
     if (state.feederState == FeederState::FEEDER_DISABLE) {
         motor_intake.Set(0);
         motor_stage.Set(0);
-        motor_rotateMain.Set(0);// set rotate down fixme
+        motor_rotateMain.Set(ControlMode::MotionMagic, FeederConstants::rotateForwardLimit);
     }
     else if (state.feederState == FeederState::FEEDER_SHOOT) {
         motor_intake.Set(state.intakeForwardSpeed);
         motor_stage.Set(state.feederForwardSpeedShoot);
     }
     else if (state.feederState == FeederState::FEEDER_RETRACT){
-        motor_rotateMain.Set(0); // set rotation to be up fixme
+        motor_rotateMain.Set(ControlMode::MotionMagic, FeederConstants::rotateReverseLimit); // set rotation to be up fixme
     }
     else if (state.feederState == Feeder::FEEDER_REVERSE) {
         motor_intake.Set(state.intakeReverseSpeed);
