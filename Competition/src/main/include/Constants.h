@@ -227,7 +227,6 @@ namespace ShooterConstants{
     constexpr static double turretLimitRight = 0 - 7;
 
     constexpr static double turretRotateLiftThreshold = 20000; // lowered from 64500
-    constexpr static double turretRotateIntakeThreshold = 829.63;  //set to intake rotate up threshold
     
     constexpr static double hubX = 0;
     constexpr static double hubY = 0;
@@ -270,7 +269,7 @@ namespace FeederConstants{
     constexpr static double main_KI = 0.0;
     constexpr static double main_KP = 0.1;
 
-    constexpr static double MAIN_MOTION_CRUISE_VELOCITY = 50;
+    constexpr static double MAIN_MOTION_CRUISE_VELOCITY = 4000;
     constexpr static double MAIN_MOTION_ACCELERATION = MAIN_MOTION_CRUISE_VELOCITY * 1;
 
 
