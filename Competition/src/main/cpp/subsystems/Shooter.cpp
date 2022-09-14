@@ -29,6 +29,7 @@ void Shooter::init()
 {
     limeTable = nt::NetworkTableInstance::GetDefault().GetTable("limelight");
     liftTable = nt::NetworkTableInstance::GetDefault().GetTable("Lift");
+    feederTable = nt::NetworkTableInstance::GetDefault().GetTable("Feeder");
     initTable("Shooter");
     
     table->PutBoolean("Zero Turret", false);
@@ -174,7 +175,7 @@ void Shooter::assessInputs()
             state.turretState = TurretState::TURRET_HOME_LEFT;
         }
         else {
-            state.turretState == TurretState::TURRET_HOME_RIGHT;
+            state.turretState = TurretState::TURRET_HOME_RIGHT;
         }
     }
     else if (operatorController->leftStickXActive()) {

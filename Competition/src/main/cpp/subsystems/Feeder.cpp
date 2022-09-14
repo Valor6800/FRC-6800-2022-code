@@ -41,10 +41,7 @@ void Feeder::init()
     motor_stage.SetInverted(true);
     motor_stage.EnableVoltageCompensation(true);
     motor_stage.ConfigVoltageCompSaturation(10);
-
-    
-
-    
+ 
     motor_rotateMain.ConfigForwardSoftLimitThreshold(FeederConstants::rotateForwardLimit);
     motor_rotateMain.ConfigReverseSoftLimitThreshold(FeederConstants::rotateReverseLimit);
 
@@ -52,8 +49,8 @@ void Feeder::init()
     motor_rotateMain.ConfigReverseSoftLimitEnable(true);
 
     motor_rotateMain.SetSelectedSensorPosition(0);
-    motor_rotateMain.SetInverted(false); // needs to be tested
-    motor_rotateFollow.SetInverted(true); // needs to be tested
+    motor_rotateMain.SetInverted(true); // needs to be tested
+    motor_rotateFollow.SetInverted(false); // needs to be tested
     motor_rotateFollow.Follow(motor_rotateMain);   
 
     motor_rotateMain.SetNeutralMode(ctre::phoenix::motorcontrol::Brake);
@@ -110,7 +107,7 @@ void Feeder::assessInputs()
         state.feederState = FeederState::FEEDER_SHOOT; //intake and feeder run
         resetIntakeSensor();
     }
-    else if (driverController->GetBButton()) {
+    else if (driverController->GetXButton()) {
         state.feederState = FeederState::FEEDER_RETRACT; //Set Intake rotate  to upper setpoint
     }
     else if (driverController->GetLeftBumper()) {
@@ -144,6 +141,7 @@ void Feeder::analyzeDashboard()
     table->PutBoolean("Banner: ", debounceSensor.getSensor());
     table->PutNumber("current feeder state", state.feederState);
 
+    table->PutNumber("Intake Encoder Value", motor_rotateMain.GetSelectedSensorPosition());
 }
 
 void Feeder::assignOutputs()

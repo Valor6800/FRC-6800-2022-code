@@ -258,19 +258,16 @@ namespace FeederConstants{
 
     constexpr static double tickToDegree = ((4200.0 /144.0) * 2048.0 ) / 360.0; 
 
-    constexpr static double rotateForwardLimit = 10 * tickToDegree;
+    constexpr static double rotateForwardLimit = 20 * tickToDegree;
     constexpr static double rotateReverseLimit = 0;
-
-
-
 
     constexpr static double main_KF = 0.05;
     constexpr static double main_KD = 0.0;
     constexpr static double main_KI = 0.0;
     constexpr static double main_KP = 0.1;
 
-    constexpr static double MAIN_MOTION_CRUISE_VELOCITY = 4000;
-    constexpr static double MAIN_MOTION_ACCELERATION = MAIN_MOTION_CRUISE_VELOCITY * 1;
+    constexpr static double MAIN_MOTION_CRUISE_VELOCITY = 15000;
+    constexpr static double MAIN_MOTION_ACCELERATION = MAIN_MOTION_CRUISE_VELOCITY * 5;
 
 
     
