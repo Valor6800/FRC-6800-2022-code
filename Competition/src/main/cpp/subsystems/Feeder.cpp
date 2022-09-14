@@ -52,8 +52,8 @@ void Feeder::init()
     motor_rotateMain.ConfigReverseSoftLimitEnable(true);
 
     motor_rotateMain.SetSelectedSensorPosition(0);
-    motor_rotateMain.SetInverted(false);
-    motor_rotateFollow.SetInverted(true);
+    motor_rotateMain.SetInverted(false); // needs to be tested
+    motor_rotateFollow.SetInverted(true); // needs to be tested
     motor_rotateFollow.Follow(motor_rotateMain);   
 
     motor_rotateMain.SetNeutralMode(ctre::phoenix::motorcontrol::Brake);
@@ -159,7 +159,7 @@ void Feeder::assignOutputs()
         motor_stage.Set(state.feederForwardSpeedShoot);
     }
     else if (state.feederState == FeederState::FEEDER_RETRACT){
-        motor_rotateMain.Set(ControlMode::MotionMagic, FeederConstants::rotateReverseLimit); // set rotation to be up fixme
+        motor_rotateMain.Set(ControlMode::MotionMagic, FeederConstants::rotateReverseLimit); // set rotation to be up
     }
     else if (state.feederState == Feeder::FEEDER_REVERSE) {
         motor_intake.Set(state.intakeReverseSpeed);
