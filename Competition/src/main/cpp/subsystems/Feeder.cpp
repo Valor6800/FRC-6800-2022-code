@@ -48,6 +48,14 @@ void Feeder::init()
     motor_rotateMain.ConfigForwardSoftLimitEnable(true);
     motor_rotateMain.ConfigReverseSoftLimitEnable(true);
 
+    motor_rotateMain.EnableVoltageCompensation(true);
+    motor_rotateMain.ConfigVoltageCompSaturation(10);
+    motor_rotateMain.ConfigSupplyCurrentLimit(SupplyCurrentLimitConfiguration(true, 25, 60, 1)); //potentially could do 40 60
+
+    motor_rotateFollow.EnableVoltageCompensation(true);
+    motor_rotateFollow.ConfigVoltageCompSaturation(10);
+    motor_rotateFollow.ConfigSupplyCurrentLimit(SupplyCurrentLimitConfiguration(true, 25, 60, 1)); //potentially could do 40 60
+
     motor_rotateMain.SetSelectedSensorPosition(0);
     motor_rotateMain.SetInverted(true); // needs to be tested
     motor_rotateFollow.SetInverted(false); // needs to be tested
@@ -157,7 +165,7 @@ void Feeder::assignOutputs()
         motor_stage.Set(state.feederForwardSpeedShoot);
     }
     else if (state.feederState == FeederState::FEEDER_RETRACT){
-        motor_rotateMain.Set(ControlMode::MotionMagic, FeederConstants::rotateReverseLimit); // set rotation to be up
+        motor_rotateMain.Set(ControlMode::MotionMagic, FeederConstants::rotateUpSetPoint); // set rotation to be up
     }
     else if (state.feederState == Feeder::FEEDER_REVERSE) {
         motor_intake.Set(state.intakeReverseSpeed);
