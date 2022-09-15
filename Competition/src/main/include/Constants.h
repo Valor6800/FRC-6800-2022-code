@@ -126,12 +126,12 @@ namespace ShooterConstants{
     // constexpr static double cHood_1x = .993;
 
     //current power
-    constexpr static double aPower_1x = 0.0553; 
-    constexpr static double bPower_1x = -0.101;
-    constexpr static double cPower_1x = 0.471;
-    constexpr static double aHood_1x = 6.29;
-    constexpr static double bHood_1x = -7.48;
-    constexpr static double cHood_1x = .993;
+    constexpr static double aPower_1x = 0.0708; 
+    constexpr static double bPower_1x = -0.188;
+    constexpr static double cPower_1x = 0.56;
+    constexpr static double aHood_1x = 9.63;
+    constexpr static double bHood_1x = -16.2;
+    constexpr static double cHood_1x = 6.16;
 
     constexpr static double aPower_2x = 0.165;
     constexpr static double bPower_2x = -0.432;
@@ -258,8 +258,9 @@ namespace FeederConstants{
 
     constexpr static double tickToDegree = ((4200.0 /144.0) * 2048.0 ) / 360.0; 
 
-    constexpr static double rotateForwardLimit = 20 * tickToDegree;
+    constexpr static double rotateForwardLimit = 27 * tickToDegree;
     constexpr static double rotateReverseLimit = 0;
+    constexpr static double rotateUpSetPoint = 4 * tickToDegree;
 
     constexpr static double main_KF = 0.05;
     constexpr static double main_KD = 0.0;
