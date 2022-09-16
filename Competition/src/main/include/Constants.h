@@ -260,7 +260,7 @@ namespace FeederConstants{
 
     constexpr static double rotateForwardLimit = 27 * tickToDegree;
     constexpr static double rotateReverseLimit = 0;
-    constexpr static double rotateUpSetPoint = 4 * tickToDegree;
+    constexpr static double rotateUpSetPoint = 1 * tickToDegree;
 
     constexpr static double main_KF = 0.05;
     constexpr static double main_KD = 0.0;
