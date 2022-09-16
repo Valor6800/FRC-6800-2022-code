@@ -62,11 +62,8 @@ void Drivetrain::configSwerveModule(int i)
 
     driveMotors.push_back(new WPI_TalonFX(DriveConstants::DRIVE_CANS[i], "baseCAN"));
     driveMotors[i]->ConfigFactoryDefault();
-    if (i == 0) {
-    driveMotors[i]->SetInverted(true);
-    } else {
     driveMotors[i]->SetInverted(false);
-    }
+    
     driveMotors[i]->ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
     driveMotors[i]->SetNeutralMode(NeutralMode::Coast);
     driveMotors[i]->ConfigSupplyCurrentLimit(SupplyCurrentLimitConfiguration(true, 60, 80, .75));
