@@ -83,7 +83,7 @@ void TurretTracker::assignOutputs() {
         // Case structure for robot locations on the field
         double superPoopHeading = 90;
         if (wrappedExistingHeading <= 45)
-            superPoopHeading += 2 * 90.0 / 4;
+            superPoopHeading += 4 * 90.0 / 4;
         else if (wrappedExistingHeading > 45 && wrappedExistingHeading <= 135)
             superPoopHeading += 1 * 90.0 / 4;
         else if (wrappedExistingHeading > 135 && wrappedExistingHeading <= 225)
