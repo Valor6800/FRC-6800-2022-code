@@ -285,6 +285,22 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         TazHangarPointsRed,
         reverseConfig);
 
+    std::vector<frc::Pose2d> PMarvinTazPointsBlue;
+    PMarvinTazPointsBlue.push_back(marvinShootBlue);
+    PMarvinTazPointsBlue.push_back(tasPMarvinBlue);
+
+    auto movePMarvinTasBlue = frc::TrajectoryGenerator::GenerateTrajectory(
+        PMarvinTazPointsBlue,
+        config);
+
+    std::vector<frc::Pose2d> TazHangarPointsBlue;
+    TazHangarPointsBlue.push_back(tasPMarvinBlue);
+    TazHangarPointsBlue.push_back(hangarSpotBlue);
+
+    auto moveTasHangarBlue = frc::TrajectoryGenerator::GenerateTrajectory(
+        TazHangarPointsBlue,
+        reverseConfig);
+
 
     auto moveMarvinBlue = frc::TrajectoryGenerator::GenerateTrajectory(
         startPose2ballBlue,
@@ -656,6 +672,28 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
 
     frc2::SwerveControllerCommand<4> cmd_moveTasHangarRed(
         moveTasHangarRed,
+        [&] () { return drivetrain->getPose_m(); },
+        drivetrain->getKinematics(),
+        frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
+        frc2::PIDController(DriveConstants::KPY, DriveConstants::KIY, DriveConstants::KDY),
+        thetaController,
+        [this] (auto states) { drivetrain->setModuleStates(states); },
+        {drivetrain}
+    );
+
+    frc2::SwerveControllerCommand<4> cmd_movePMarvinTasBlue(
+        movePMarvinTasBlue,
+        [&] () { return drivetrain->getPose_m(); },
+        drivetrain->getKinematics(),
+        frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
+        frc2::PIDController(DriveConstants::KPY, DriveConstants::KIY, DriveConstants::KDY),
+        thetaController,
+        [this] (auto states) { drivetrain->setModuleStates(states); },
+        {drivetrain}
+    );
+
+    frc2::SwerveControllerCommand<4> cmd_moveTasHangarBlue(
+        moveTasHangarBlue,
         [&] () { return drivetrain->getPose_m(); },
         drivetrain->getKinematics(),
         frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
@@ -1203,6 +1241,38 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     cmd_shooterAuto
     );
 
+    frc2::SequentialCommandGroup *shoot3pick1ChezBlue = new frc2::SequentialCommandGroup();
+    shoot3pick1ChezBlue->AddCommands
+    (cmd_set2ballOdometryRed,
+    cmd_intakeClearDeque,
+    cmd_nextBall,
+    cmd_intakeAuto,
+    frc2::WaitCommand((units::second_t).2),
+    cmd_shooterAuto,
+    cmd_movePreMarvinBlue,
+    cmd_intakeDisable,
+    cmd_turretTrack,
+    frc2::WaitCommand((units::second_t).1),
+    cmd_intakeShoot,
+    frc2::WaitCommand((units::second_t)0.5),
+    cmd_intakeDisable,
+    frc2::WaitCommand((units::second_t)0.2),
+    cmd_intakeShoot,
+    frc2::WaitCommand((units::second_t)0.5),
+    cmd_intakeAuto,
+    cmd_movePMarvinTasBlue,
+    cmd_moveTasHangarBlue,
+    cmd_intakeReverse,
+    frc2::WaitCommand((units::second_t).5),
+    cmd_intakeAuto,
+    cmd_move_moveEndFromTrenchBlue,
+    cmd_turretHomeRight,
+    cmd_turretTrack,
+    frc2::WaitCommand((units::second_t).125),
+    cmd_intakeShoot,
+    cmd_shooterAuto
+    );
+
     frc2::SequentialCommandGroup *shoot2Blue = new frc2::SequentialCommandGroup();
     shoot2Blue->AddCommands
     (cmd_set2ballOdometryBlue,
@@ -1441,6 +1511,7 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     m_chooser.AddOption("BLUE 3 ball Chez", shoot3ChezBlue);
 
     m_chooser.AddOption("RED 3 ball + Pick 1 Chez", shoot3pick1ChezRed);
+    m_chooser.AddOption("BLUE 3 ball + Pick 1 Chez", shoot3pick1ChezBlue);
 
     m_chooser.SetDefaultOption("RED 2 ball", shoot2Red);
 
