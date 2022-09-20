@@ -78,8 +78,8 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     frc::Pose2d tasRed = frc::Pose2d(units::meter_t(6.069), units::meter_t(7.9), frc::Rotation2d(55_deg));
     frc::Pose2d tasBlue = frc::Pose2d(units::meter_t(6.069), units::meter_t(7.9), frc::Rotation2d(55_deg));
 
-    frc::Pose2d tasPMarvinRed = frc::Pose2d(units::meter_t(6.069), units::meter_t(7.9), frc::Rotation2d(35_deg));
-    frc::Pose2d tasPMarvinBlue = frc::Pose2d(units::meter_t(6.069), units::meter_t(7.9), frc::Rotation2d(35_deg));
+    frc::Pose2d tasPMarvinRed = frc::Pose2d(units::meter_t(6.269), units::meter_t(8.1), frc::Rotation2d(35_deg));
+    frc::Pose2d tasPMarvinBlue = frc::Pose2d(units::meter_t(6.269), units::meter_t(8.1), frc::Rotation2d(35_deg));
 
     frc::Translation2d tasToSpeedyConstrainRed = frc::Translation2d(5_m, 7.5_m); //1.2_m in case we need to push it more towards wall
     frc::Translation2d tasToSpeedyConstrainBlue = frc::Translation2d(5_m, 7.5_m); //1.2_m in case we need to push it more towards wall
@@ -96,8 +96,8 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     frc::Pose2d trenchEndRed = frc::Pose2d(3.75_m, 3_m, frc::Rotation2d(135_deg)); 
     frc::Pose2d trenchEndBlue = frc::Pose2d(3.75_m, 3_m, frc::Rotation2d(135_deg));
 
-    frc::Pose2d endPose2BallRed = frc::Pose2d(7.069_m, 7.3_m, frc::Rotation2d(60_deg));
-    frc::Pose2d endPose2BallBlue = frc::Pose2d(7.069_m, 7.3_m, frc::Rotation2d(60_deg)); 
+    frc::Pose2d endPose2BallRed = frc::Pose2d(7.069_m, 7.3_m, frc::Rotation2d(20_deg));
+    frc::Pose2d endPose2BallBlue = frc::Pose2d(7.069_m, 7.3_m, frc::Rotation2d(20_deg)); 
 
 
     frc2::InstantCommand cmd_printHeading = frc2::InstantCommand( [&] {
@@ -1182,11 +1182,11 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     cmd_movePreMarvinRed,
     cmd_intakeDisable,
     cmd_turretTrack,
-    frc2::WaitCommand((units::second_t).5),
+    frc2::WaitCommand((units::second_t).1),
     cmd_intakeShoot,
     frc2::WaitCommand((units::second_t)0.5),
     cmd_intakeDisable,
-    frc2::WaitCommand((units::second_t)0.5),
+    frc2::WaitCommand((units::second_t)0.2),
     cmd_intakeShoot,
     frc2::WaitCommand((units::second_t)0.5),
     cmd_intakeAuto,
@@ -1194,10 +1194,8 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     cmd_moveTasHangarRed,
     cmd_intakeReverse,
     frc2::WaitCommand((units::second_t).5),
-    cmd_intakeDisable,
-    frc2::WaitCommand((units::second_t)1.8),
     cmd_intakeAuto,
-    cmd_move_moveEndFromTrenchBlue,
+    cmd_move_moveEndFromTrenchRed,
     cmd_turretHomeRight,
     cmd_turretTrack,
     frc2::WaitCommand((units::second_t).125),
