@@ -123,6 +123,8 @@ public:
           double tv;
           double tx;
 
+          bool disableTurret;
+
     } state;
 
      void limelightTrack(bool track);

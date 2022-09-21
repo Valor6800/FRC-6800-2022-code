@@ -44,6 +44,8 @@ void Shooter::init()
     table->PutNumber("Hood Y Int 1X", ShooterConstants::cHood_1x);
     table->PutNumber("Power Y Int 1X", ShooterConstants::cPower_1x);
 
+    table->PutBoolean("Disable Turret", false);
+
     // table->PutNumber("Hood Y Int 2X", ShooterConstants::cHood_2x);
     // table->PutNumber("Power Y Int 2X", ShooterConstants::cPower_2x);
 
@@ -120,6 +122,8 @@ void Shooter::init()
 
     state.pipeline = 0;
     state.LoBFZoom = 1;
+
+    state.disableTurret = false;
     
     resetState();
     resetEncoder();
@@ -275,6 +279,8 @@ void Shooter::analyzeDashboard()
     }
     state.lastTurretState = state.turretState;
 
+    state.disableTurret = table->GetBoolean("Disable Turret", false);
+
     table->PutNumber("Hood degrees", hoodEncoder.GetPosition());
     table->PutNumber("Turret pos", turretEncoder.GetPosition());
 
@@ -320,7 +326,11 @@ void Shooter::assignOutputs()
 
     //MANUAL
     state.turretTarget = 0;
-    if (state.turretState == TurretState::TURRET_MANUAL) {
+    if (state.disableTurret) {
+        state.turretOutput = 0;
+        turret.Set(state.turretOutput);
+    }
+    else if (state.turretState == TurretState::TURRET_MANUAL) {
         state.turretOutput = operatorController->leftStickX(3) * ShooterConstants::TURRET_SPEED_MULTIPLIER;
         if( (turretEncoder.GetPosition() > 160 && state.turretOutput > ShooterConstants::pDeadband) ||
          (turretEncoder.GetPosition() < 20 && state.turretOutput < -1 * ShooterConstants::pDeadband) ){
