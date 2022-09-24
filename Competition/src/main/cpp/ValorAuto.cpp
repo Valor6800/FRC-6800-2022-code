@@ -69,8 +69,8 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     frc::Pose2d preMarvinRed = frc::Pose2d(units::meter_t(2.75), units::meter_t(5.9), frc::Rotation2d(55_deg));
     frc::Pose2d preMarvinBlue = frc::Pose2d(units::meter_t(2.75), units::meter_t(5.9), frc::Rotation2d(55_deg));
 
-    frc::Pose2d marvinShootRed = frc::Pose2d(units::meter_t(5), units::meter_t(7.5), frc::Rotation2d(27_deg));
-    frc::Pose2d marvinShootBlue = frc::Pose2d(units::meter_t(5), units::meter_t(7.5), frc::Rotation2d(27_deg));
+    frc::Pose2d marvinShootRed = frc::Pose2d(units::meter_t(4.5), units::meter_t(7.2), frc::Rotation2d(27_deg));
+    frc::Pose2d marvinShootBlue = frc::Pose2d(units::meter_t(4.5), units::meter_t(7.2), frc::Rotation2d(27_deg));
 
     frc::Pose2d marvinShootAltRed = frc::Pose2d(units::meter_t(3.35), units::meter_t(5), frc::Rotation2d(-90_deg));
     frc::Pose2d marvinShootAltBlue = frc::Pose2d(units::meter_t(3.35), units::meter_t(5), frc::Rotation2d(-90_deg));
@@ -1235,10 +1235,9 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     cmd_intakeAuto,
     cmd_move_moveEndFromTrenchRed,
     cmd_turretHomeRight,
-    cmd_turretTrack,
+    cmd_shooterAuto,
     frc2::WaitCommand((units::second_t).125),
-    cmd_intakeShoot,
-    cmd_shooterAuto
+    cmd_intakeShoot
     );
 
     frc2::SequentialCommandGroup *shoot3pick1ChezBlue = new frc2::SequentialCommandGroup();
@@ -1267,10 +1266,9 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     cmd_intakeAuto,
     cmd_move_moveEndFromTrenchBlue,
     cmd_turretHomeRight,
-    cmd_turretTrack,
+    cmd_shooterAuto,
     frc2::WaitCommand((units::second_t).125),
-    cmd_intakeShoot,
-    cmd_shooterAuto
+    cmd_intakeShoot
     );
 
     frc2::SequentialCommandGroup *shoot2Blue = new frc2::SequentialCommandGroup();
