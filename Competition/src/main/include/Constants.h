@@ -268,7 +268,7 @@ namespace FeederConstants{
     constexpr static double main_KP = 0.1;
 
     constexpr static double MAIN_MOTION_CRUISE_VELOCITY = 15000;
-    constexpr static double MAIN_MOTION_ACCELERATION = MAIN_MOTION_CRUISE_VELOCITY * 5;
+    constexpr static double MAIN_MOTION_ACCELERATION = MAIN_MOTION_CRUISE_VELOCITY * 5 * 0.5; //halfed accel
 
 
     

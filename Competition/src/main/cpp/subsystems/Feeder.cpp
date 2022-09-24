@@ -17,8 +17,8 @@ Feeder::Feeder() : ValorSubsystem(),
                            operatorController(NULL),
                            motor_intake(FeederConstants::MOTOR_INTAKE_CAN_ID, "baseCAN"),
                            motor_stage(FeederConstants::MOTOR_STAGE_CAN_ID, "baseCAN"),
-                           motor_rotateMain(FeederConstants::MOTOR_ROTATE_MAIN_CAN_ID, "baseCAN"),
-                           motor_rotateFollow(FeederConstants::MOTOR_ROTATE_FOLLOW_CAN_ID, "baseCAN"),
+                           motor_rotateRight(FeederConstants::MOTOR_ROTATE_MAIN_CAN_ID, "baseCAN"),
+                           motor_rotateLeft(FeederConstants::MOTOR_ROTATE_FOLLOW_CAN_ID, "baseCAN"),
 
                            banner(FeederConstants::BANNER_DIO_PORT)
 {
@@ -42,38 +42,55 @@ void Feeder::init()
     motor_stage.EnableVoltageCompensation(true);
     motor_stage.ConfigVoltageCompSaturation(10);
  
-    motor_rotateMain.ConfigForwardSoftLimitThreshold(FeederConstants::rotateForwardLimit);
-    motor_rotateMain.ConfigReverseSoftLimitThreshold(FeederConstants::rotateReverseLimit);
+    motor_rotateRight.ConfigForwardSoftLimitThreshold(FeederConstants::rotateForwardLimit);
+    motor_rotateRight.ConfigReverseSoftLimitThreshold(FeederConstants::rotateReverseLimit);
 
-    motor_rotateMain.ConfigForwardSoftLimitEnable(true);
-    motor_rotateMain.ConfigReverseSoftLimitEnable(true);
+    motor_rotateLeft.ConfigForwardSoftLimitThreshold(FeederConstants::rotateForwardLimit);
+    motor_rotateLeft.ConfigReverseSoftLimitThreshold(FeederConstants::rotateReverseLimit);
 
-    motor_rotateMain.EnableVoltageCompensation(true);
-    motor_rotateMain.ConfigVoltageCompSaturation(10);
-    motor_rotateMain.ConfigSupplyCurrentLimit(SupplyCurrentLimitConfiguration(true, 25, 60, 1)); //potentially could do 40 60
+    motor_rotateRight.ConfigForwardSoftLimitEnable(true);
+    motor_rotateRight.ConfigReverseSoftLimitEnable(true);
 
-    motor_rotateFollow.EnableVoltageCompensation(true);
-    motor_rotateFollow.ConfigVoltageCompSaturation(10);
-    motor_rotateFollow.ConfigSupplyCurrentLimit(SupplyCurrentLimitConfiguration(true, 25, 60, 1)); //potentially could do 40 60
+    motor_rotateLeft.ConfigForwardSoftLimitEnable(true);
+    motor_rotateLeft.ConfigReverseSoftLimitEnable(true);
 
-    motor_rotateMain.SetSelectedSensorPosition(0);
-    motor_rotateMain.SetInverted(true); // needs to be tested
-    motor_rotateFollow.SetInverted(false); // needs to be tested
-    motor_rotateFollow.Follow(motor_rotateMain);   
+    motor_rotateRight.EnableVoltageCompensation(true);
+    motor_rotateRight.ConfigVoltageCompSaturation(10);
+    motor_rotateRight.ConfigSupplyCurrentLimit(SupplyCurrentLimitConfiguration(true, 25, 60, 1)); //potentially could do 40 60
 
-    motor_rotateMain.SetNeutralMode(ctre::phoenix::motorcontrol::Brake);
-    motor_rotateFollow.SetNeutralMode(ctre::phoenix::motorcontrol::Brake);
+    motor_rotateLeft.EnableVoltageCompensation(true);
+    motor_rotateLeft.ConfigVoltageCompSaturation(10);
+    motor_rotateLeft.ConfigSupplyCurrentLimit(SupplyCurrentLimitConfiguration(true, 25, 60, 1)); //potentially could do 40 60
 
-    motor_rotateMain.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
-    motor_rotateMain.ConfigAllowableClosedloopError(0, 0);
-    motor_rotateMain.Config_IntegralZone(0, 0);
+    motor_rotateRight.SetSelectedSensorPosition(0);
+    motor_rotateLeft.SetSelectedSensorPosition(0);
+    motor_rotateRight.SetInverted(true);
+    motor_rotateLeft.SetInverted(false);
+    
+    motor_rotateRight.SetNeutralMode(ctre::phoenix::motorcontrol::Brake);
+    motor_rotateLeft.SetNeutralMode(ctre::phoenix::motorcontrol::Brake);
 
-    motor_rotateMain.Config_kF(0, FeederConstants::main_KF);
-    motor_rotateMain.Config_kD(0, FeederConstants::main_KD);
-    motor_rotateMain.Config_kI(0, FeederConstants::main_KI);
-    motor_rotateMain.Config_kP(0, FeederConstants::main_KP);
-    motor_rotateMain.ConfigMotionAcceleration(FeederConstants::MAIN_MOTION_ACCELERATION);
-    motor_rotateMain.ConfigMotionCruiseVelocity(FeederConstants::MAIN_MOTION_CRUISE_VELOCITY);
+    motor_rotateRight.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
+    motor_rotateRight.ConfigAllowableClosedloopError(0, 0);
+    motor_rotateRight.Config_IntegralZone(0, 0);
+
+    motor_rotateRight.Config_kF(0, FeederConstants::main_KF);
+    motor_rotateRight.Config_kD(0, FeederConstants::main_KD);
+    motor_rotateRight.Config_kI(0, FeederConstants::main_KI);
+    motor_rotateRight.Config_kP(0, FeederConstants::main_KP);
+    motor_rotateRight.ConfigMotionAcceleration(FeederConstants::MAIN_MOTION_ACCELERATION);
+    motor_rotateRight.ConfigMotionCruiseVelocity(FeederConstants::MAIN_MOTION_CRUISE_VELOCITY);
+
+    motor_rotateLeft.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
+    motor_rotateLeft.ConfigAllowableClosedloopError(0, 0);
+    motor_rotateLeft.Config_IntegralZone(0, 0);
+
+    motor_rotateLeft.Config_kF(0, FeederConstants::main_KF);
+    motor_rotateLeft.Config_kD(0, FeederConstants::main_KD);
+    motor_rotateLeft.Config_kI(0, FeederConstants::main_KI);
+    motor_rotateLeft.Config_kP(0, FeederConstants::main_KP);
+    motor_rotateLeft.ConfigMotionAcceleration(FeederConstants::MAIN_MOTION_ACCELERATION);
+    motor_rotateLeft.ConfigMotionCruiseVelocity(FeederConstants::MAIN_MOTION_CRUISE_VELOCITY);
 
     table->PutBoolean("Reverse Feeder?", false);
     table->PutNumber("Intake Reverse Speed", FeederConstants::DEFAULT_INTAKE_SPEED_REVERSE);
@@ -149,7 +166,7 @@ void Feeder::analyzeDashboard()
     table->PutBoolean("Banner: ", debounceSensor.getSensor());
     table->PutNumber("current feeder state", state.feederState);
 
-    table->PutNumber("Intake Encoder Value", motor_rotateMain.GetSelectedSensorPosition());
+    table->PutNumber("Intake Encoder Value", motor_rotateRight.GetSelectedSensorPosition());
 }
 
 void Feeder::assignOutputs()
@@ -158,14 +175,16 @@ void Feeder::assignOutputs()
     if (state.feederState == FeederState::FEEDER_DISABLE) {
         motor_intake.Set(0);
         motor_stage.Set(0);
-        motor_rotateMain.Set(ControlMode::MotionMagic, FeederConstants::rotateForwardLimit);
+        motor_rotateRight.Set(ControlMode::MotionMagic, FeederConstants::rotateForwardLimit);
+        motor_rotateLeft.Set(ControlMode::MotionMagic, FeederConstants::rotateForwardLimit);
     }
     else if (state.feederState == FeederState::FEEDER_SHOOT) {
         motor_intake.Set(state.intakeForwardSpeed);
         motor_stage.Set(state.feederForwardSpeedShoot);
     }
     else if (state.feederState == FeederState::FEEDER_RETRACT){
-        motor_rotateMain.Set(ControlMode::MotionMagic, FeederConstants::rotateUpSetPoint); // set rotation to be up
+        motor_rotateRight.Set(ControlMode::MotionMagic, FeederConstants::rotateUpSetPoint); // set rotation to be up
+        motor_rotateLeft.Set(ControlMode::MotionMagic, FeederConstants::rotateUpSetPoint);
     }
     else if (state.feederState == Feeder::FEEDER_REVERSE) {
         motor_intake.Set(state.intakeReverseSpeed);
