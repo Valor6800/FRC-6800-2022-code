@@ -71,8 +71,8 @@ private:
 
     WPI_TalonFX motor_intake;
     WPI_TalonFX motor_stage;
-    WPI_TalonFX motor_rotateMain;
-    WPI_TalonFX motor_rotateFollow;
+    WPI_TalonFX motor_rotateRight;
+    WPI_TalonFX motor_rotateLeft;
     
 
 
