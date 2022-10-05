@@ -1,10 +1,13 @@
 #include "subsystems/Drivetrain.h"
 #include "subsystems/Feeder.h"
-#include "auto/ValorPoints.h"
+#include "auto/ValorAutoAction.h"
 
 #include <frc/trajectory/Trajectory.h>
 #include <frc/trajectory/TrajectoryGenerator.h>
 #include <frc2/command/InstantCommand.h>
+
+#include <string>
+#include <vector>
 
 #ifndef VALOR_AUTO_H
 #define VALOR_AUTO_H
@@ -19,10 +22,11 @@ class ValorAuto {
 
         frc2::InstantCommand getSetStateFeederCommand(Feeder::FeederState);
 
-        void test();
+        void readAuto(std::string);
 
     private:
         static frc::TrajectoryConfig config;
+        std::vector<ValorAutoAction> autoActions;
 
         frc::ProfiledPIDController<units::radians> thetaController{
                 DriveConstants::KPT,

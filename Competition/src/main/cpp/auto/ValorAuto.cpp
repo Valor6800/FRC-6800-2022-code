@@ -1,6 +1,11 @@
-#include "ValorAuto.h"
+#include "auto/ValorAuto.h"
 
 #include "Constants.h"
+#include <fstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <iostream>
 
 frc::TrajectoryConfig ValorAuto::config(
     units::velocity::meters_per_second_t{SwerveConstants::AUTO_MAX_SPEED_MPS},
@@ -43,8 +48,17 @@ frc::Trajectory ValorAuto::createTrajectory(std::vector<frc::Pose2d>& poses, boo
     return frc::TrajectoryGenerator::GenerateTrajectory(poses, config);
 }
 
-void ValorAuto::test()
-{
+void ValorAuto::readAuto(std::string fileName)
+{ 
+    std::ifstream infile("/home/lvuser/autos/" + fileName + ".txt");
+    if (!infile.good())
+        return;
+
+    std::string line;
+    while(std::getline(infile, line)) {
+        int filePointer = 0;
+        int nextPointer = line.find_first_of(",", filePointer);
+    }
     auto startPose = points->getPose(ValorPoints::LOCATIONS::START, 92);
     auto endPose = points->getPose(ValorPoints::LOCATIONS::BUGS, 90);
     std::vector<frc::Pose2d> poses{startPose, endPose};
