@@ -7,6 +7,8 @@
 
 #include "Robot.h"
 
+
+
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc2/command/CommandScheduler.h>
 
@@ -37,7 +39,7 @@ void Robot::DisabledInit() {
     m_container.m_drivetrain.robotMode = ValorSubsystem::RobotMode::DISABLED;
     m_container.m_shooter.robotMode = ValorSubsystem::RobotMode::DISABLED;
     m_container.m_turretTracker.robotMode = ValorSubsystem::RobotMode::DISABLED;
-    //m_container.m_lift.robotMode = ValorSubsystem::RobotMode::DISABLED; //just added, not tested
+    m_container.m_lift.robotMode = ValorSubsystem::RobotMode::DISABLED; //just added, not tested
 
     m_container.m_shooter.resetState();
     m_container.m_drivetrain.resetState();
@@ -72,6 +74,7 @@ void Robot::AutonomousInit() {
     m_container.m_shooter.robotMode = ValorSubsystem::RobotMode::AUTO;
     m_container.m_lift.robotMode = ValorSubsystem::RobotMode::AUTO;
     m_container.m_turretTracker.robotMode = ValorSubsystem::RobotMode::AUTO;
+    m_container.m_turretTracker.disableWrapAround();
 
     m_container.m_drivetrain.pullSwerveModuleZeroReference();
 }
@@ -94,8 +97,13 @@ void Robot::TeleopInit() {
     m_container.m_feeder.robotMode = ValorSubsystem::RobotMode::TELEOP;
     m_container.m_drivetrain.robotMode = ValorSubsystem::RobotMode::TELEOP;
     m_container.m_shooter.robotMode = ValorSubsystem::RobotMode::TELEOP;
+    m_container.m_shooter.state.turretState = m_container.m_shooter.TURRET_TRACK;
+    m_container.m_shooter.state.hoodState = m_container.m_shooter.HOOD_TRACK;
+    m_container.m_shooter.state.flywheelState = m_container.m_shooter.FLYWHEEL_TRACK;
+
     m_container.m_lift.robotMode = ValorSubsystem::RobotMode::TELEOP;
     m_container.m_turretTracker.robotMode = ValorSubsystem::RobotMode::TELEOP; 
+    m_container.m_turretTracker.enableWrapAround();
 
 }
 

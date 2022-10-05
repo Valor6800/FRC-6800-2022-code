@@ -11,12 +11,11 @@
 #include "Constants.h"
 #include "ValorSwerve.h"
 #include "Drivetrain.h"
+#include "ValorGamepad.h"
 #include <vector>
 
 #include <rev/CANSparkMax.h>
 #include <rev/CANEncoder.h>
-
-#include <frc/XboxController.h>
 
 #include <frc/shuffleboard/Shuffleboard.h>
 #include <frc/shuffleboard/ShuffleboardLayout.h>
@@ -36,7 +35,7 @@ public:
     Shooter();
 
     void init();
-    void setControllers(frc::XboxController *controllerO, frc::XboxController *controllerD);
+    void setControllers(ValorGamepad *controllerO, ValorGamepad *controllerD);
     void setDrivetrain(Drivetrain * dt);
 
     void assessInputs();
@@ -85,17 +84,6 @@ public:
           TurretState turretState;
           TurretState lastTurretState;
 
-          double leftStickX;
-     
-          bool backButton;
-          bool startButton;
-          bool rightBumper;
-          bool aButton;
-          bool yButton;
-          bool xButtonPressed;
-          bool bButton;
-
-          bool driverLeftTrigger;
           bool driverLastLeftTrigger;
 
           double limelightDistance;
@@ -120,12 +108,18 @@ public:
           int currentBall;
 
           int pipeline;
+          int LoBFZoom;
 
-          double hoodB;
-          double powerB;
+          double hoodB_1x;
+          double powerB_1x;
+          double hoodB_2x;
+          double powerB_2x;
 
-          double powerC;
-          double hoodC;
+          double powerC_1x;
+          double hoodC_1x;
+          double powerC_2x;
+          double hoodC_2x;
+
           double tv;
           double tx;
 
@@ -143,11 +137,13 @@ public:
      rev::SparkMaxRelativeEncoder hoodEncoder = hood.GetEncoder();
      rev::SparkMaxPIDController hoodPidController = hood.GetPIDController();
 
-     frc::XboxController *operatorController;
-     frc::XboxController *driverController;
+     ValorGamepad *operatorController;
+     ValorGamepad *driverController;
 
      std::shared_ptr<nt::NetworkTable> limeTable;
      std::shared_ptr<nt::NetworkTable> liftTable;
+     std::shared_ptr<nt::NetworkTable> feederTable;
+
 
      Drivetrain *odom;
 

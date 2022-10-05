@@ -15,7 +15,7 @@ TurretTracker::TurretTracker() : ValorSubsystem()
 
 void TurretTracker::init() {
     initTable("TurretTracker");
-    table->PutBoolean("Use Turret Shoot", false);
+    table->PutBoolean("Use Turret Shoot", true);
 }
 
 void TurretTracker::setDrivetrain(Drivetrain *dt){
@@ -34,28 +34,65 @@ void TurretTracker::analyzeDashboard() {
 
 }
 
+void TurretTracker::disableWrapAround(){
+    table->PutBoolean("Use Turret Shoot", false);
+}
+
+void TurretTracker::enableWrapAround(){
+    table->PutBoolean("Use Turret Shoot", true);
+}
+
+
+
 void TurretTracker::assignOutputs() {
-    // state.cachedVX = drivetrain->getKinematics().ToChassisSpeeds().vx.to<double>();
-    // state.cachedVY = drivetrain->getKinematics().ToChassisSpeeds().vy.to<double>();
-    // state.cachedVT = drivetrain->getKinematics().ToChassisSpeeds().omega.to<double>();
 
     double tv = shooter->state.tv;
+    double turretPos = shooter->turretEncoder.GetPosition();
+    double robotHeading = drivetrain->getPose_m().Rotation().Degrees().to<double>();
+    double x = drivetrain->getPose_m().X().to<double>();
+    double y = drivetrain->getPose_m().Y().to<double>();
+    double tx = shooter->state.tx;
 
     if (tv == 1) {
-        state.cachedTx = shooter->state.tx;
         // 0.75 = limeligh KP
-        state.target = (-state.cachedTx * 0.75) + shooter->turretEncoder.GetPosition();
+        state.target = (-state.cachedTx * 0.75) + turretPos;
+
+        state.cachedHeading = robotHeading;
+        state.cachedX = x;
+        state.cachedY = y;
+        state.cachedTx = tx;
+        state.cachedTurretPos = turretPos;
         
-        state.cachedHeading = drivetrain->getPose_m().Rotation().Degrees().to<double>();
-        state.cachedX = drivetrain->getPose_m().X().to<double>();
-        state.cachedY = drivetrain->getPose_m().Y().to<double>();
-        state.cachedTurretPos = shooter->turretEncoder.GetPosition();
+        state.destinationTurretHeading = robotHeading + turretPos - 90 - state.cachedTx;
     }
     else {
-        if (table->GetBoolean("Use Turret Shoot", false))
-            state.target = -1 * drivetrain->getPose_m().Rotation().Degrees().to<double>() + state.cachedTurretPos - state.cachedTx;
+        if (table->GetBoolean("Use Turret Shoot", true))
+            state.target = state.destinationTurretHeading - robotHeading + 90 + tx;
         else
-            state.target = shooter->turretEncoder.GetPosition();
+            state.target = turretPos;
+    }
+
+    // Super Poop
+    if (shooter->driverController->leftTriggerActive()) {
+        double wrappedExistingHeading = state.destinationTurretHeading;
+
+        // Wrap to positive numbers
+        if (wrappedExistingHeading < 0)
+            wrappedExistingHeading += 360;
+
+        // Case structure for robot locations on the field
+        double superPoopHeading = 90;
+        if (wrappedExistingHeading <= 45)
+            superPoopHeading += 4 * 90.0 / 4;
+        else if (wrappedExistingHeading > 45 && wrappedExistingHeading <= 135)
+            superPoopHeading += 1 * 90.0 / 4;
+        else if (wrappedExistingHeading > 135 && wrappedExistingHeading <= 225)
+            superPoopHeading += 3 * 90.0 / 4;
+        else
+            superPoopHeading += 90;
+        
+        // Convert heading to turret angle
+        state.target = superPoopHeading - robotHeading + 90 + state.cachedTx;
     }
 
     if (state.target < -90) {
@@ -65,11 +102,11 @@ void TurretTracker::assignOutputs() {
         state.target -= 360;
     }
 
-    if (state.target < 0) {
-        state.target = 0;
+    if (state.target < -7) {
+        state.target = -7;
     }
-    else if (state.target > 180) {
-        state.target = 180;
+    else if (state.target > 190.5) {
+        state.target = 190.5;
     }
 
     shooter->assignTurret(state.target);
