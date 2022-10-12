@@ -167,6 +167,7 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     frc2::InstantCommand cmd_setOdometryZero = frc2::InstantCommand( [&] {
         drivetrain->resetOdometry(frc::Pose2d(0_m, 0_m, frc::Rotation2d(0_deg)));
     });
+    // 5 Ball
 
     auto moveBugsRed = frc::TrajectoryGenerator::GenerateTrajectory(
         startPoseRed,
@@ -250,6 +251,43 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         {},
         marvinRed,
         config);
+    // 5 Ball
+    
+    std::vector<frc::Pose2d> preBugsPointsRed;
+    preBugsPointsRed.push_back(startPoseRed);
+    preBugsPointsRed.push_back(bugsRed);
+    preBugsPointsRed.push_back(predaffyRed);
+
+    auto movepreBugsRed = frc::TrajectoryGenerator::GenerateTrajectory(
+        preBugsPointsRed,
+        config);
+
+    std::vector<frc::Pose2d> preDaffytoDaffyPointsRed;
+    preDaffytoDaffyPointsRed.push_back(predaffyRed);
+    preDaffytoDaffyPointsRed.push_back(daffyRed);
+
+    auto movepreDaffytoDaffyRed = frc::TrajectoryGenerator::GenerateTrajectory(
+        preDaffytoDaffyPointsRed,
+        config);
+
+    std::vector<frc::Pose2d> DaffytoStepBackPorkyPointsRed;
+    DaffytoStepBackPorkyPointsRed.push_back(daffyRed);
+    DaffytoStepBackPorkyPointsRed.push_back(porkyRed);
+    DaffytoStepBackPorkyPointsRed.push_back(porkyStepBackRed);
+
+    auto moveDaffytoStepBackPorkyRed = frc::TrajectoryGenerator::GenerateTrajectory(
+        DaffytoStepBackPorkyPointsRed,
+        config);
+
+    std::vector<frc::Pose2d> StepBackPorkytoShootRedPointsRed;
+    StepBackPorkytoShootRedPointsRed.push_back(porkyStepBeckRed);
+    StepBackPorkytoShootRedPointsRed.push_back(porkyShootRed);
+
+    auto moveStepBackPorkytoShootRedRed = frc::TrajectoryGenerator::GenerateTrajectory(
+        StepBackPorkytoShootRedPointsRed,
+        config);
+
+    // 2 Ball
 
     std::vector<frc::Pose2d> preMarvinPointsRed;
     preMarvinPointsRed.push_back(startPose2ballRed);
@@ -489,6 +527,7 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         [this] (auto states) { drivetrain->setModuleStates(states); },
         {drivetrain}
     );
+
     frc2::SwerveControllerCommand<4> cmd_move_moveBugsBlue(
         moveBugsBlue,
         [&] () { return drivetrain->getPose_m(); },
@@ -636,6 +675,52 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         [this] (auto states) { drivetrain->setModuleStates(states); },
         {drivetrain}
     );
+    frc2::SwerveControllerCommand<4> cmd_movePreBugsRed(
+        moveBugsRed,
+        [&]()
+        { return drivetrain->getPose_m(); },
+        drivetrain->getKinematics(),
+        frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
+        frc2::PIDController(DriveConstants::KPY, DriveConstants::KIY, DriveConstants::KDY),
+        thetaController,
+        [this](auto states) { drivetrain->setModuleStates(states); },
+        {drivetrain});
+
+    frc2::SwerveControllerCommand<4> cmd_movepreDaffytoDaffyRed(
+        movepreDaffytoDaffyRed,
+        [&]()
+        { return drivetrain->getPose_m(); },
+        drivetrain->getKinematics(),
+        frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
+        frc2::PIDController(DriveConstants::KPY, DriveConstants::KIY, DriveConstants::KDY),
+        thetaController,
+        [this](auto states) { drivetrain->setModuleStates(states); },
+        {drivetrain}
+    );
+
+    frc2::SwerveControllerCommand<4> cmd_moveDaffytoStepBackPorkyRed(
+        moveDaffytoStepBackPorkyRed,
+        [&]()
+        { return drivetrain->getPose_m(); },
+        drivetrain->getKinematics(),
+        frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
+        frc2::PIDController(DriveConstants::KPY, DriveConstants::KIY, DriveConstants::KDY),
+        thetaController,
+        [this](auto states) { drivetrain->setModuleStates(states); },
+        {drivetrain}
+    );
+
+    frc2::SwerveControllerCommand<4> cmd_moveStepBackPorkytoShootRedRed(
+        moveStepBackPorkytoShootRedRed,
+        [&]()
+        { return drivetrain->getPose_m(); },
+        drivetrain->getKinematics(),
+        frc2::PIDController(DriveConstants::KPX, DriveConstants::KIX, DriveConstants::KDX),
+        frc2::PIDController(DriveConstants::KPY, DriveConstants::KIY, DriveConstants::KDY),
+        thetaController,
+        [this](auto states)
+        { drivetrain->setModuleStates(states); },
+        {drivetrain});
 
     frc2::SwerveControllerCommand<4> cmd_movePreMarvinRed(
         movePreMarvinRed,
@@ -1166,6 +1251,56 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     frc2::WaitCommand((units::second_t).5),
     cmd_intakeDisable
     );
+    frc2::SequentialCommandGroup *shootHolo5BallRed = new frc2::SequentialCommandGroup();
+    shootHolo5BallRed->AddCommands( cmd_setOdometryRed,
+                                    cmd_intakeClearDeque,
+                                    cmd_nextBall,
+                                    cmd_intakeAuto,
+                                    frc2::WaitCommand((units::second_t).2),
+                                    cmd_shooterAuto,
+                                    cmd_movePreBugsRed,
+                                    cmd_intakeDisable,
+                                    cmd_turretTrack,
+                                    frc2::WaitCommand((units::second_t).25),
+                                    cmd_intakeShoot,
+                                    frc2::WaitCommand((units::second_t)0.6),
+                                    cmd_intakeAuto,
+                                    cmd_movepreDaffytoDaffyRed,
+                                    cmd_intakeDisable,
+                                    cmd_turretTrack,
+                                    frc2::WaitCommand((units::second_t)0.25),
+                                    cmd_intakeShoot,
+                                    frc2::WaitCommand((units::second_t)0.2),
+                                    cmd_intakeAuto,
+                                    cmd_moveDaffytoStepBackPorkyRed,
+                                    cmd_intakeClearDeque,
+                                    cmd_intakeAuto,
+                                    frc2::WaitCommand((units::second_t)0.25),
+                                    cmd_moveStepBackPorkytoShootRedRed,
+                                    cmd_turretTrack,
+                                    frc2::WaitCommand((units::second_t)0.375),
+                                    cmd_intakeShoot,
+                                    frc2::WaitCommand((units::second_t)0.75),
+                                    cmd_intakeDisable);
+
+    frc2::SequentialCommandGroup *shoot3ChezRed = new frc2::SequentialCommandGroup();
+    shoot3ChezRed->AddCommands(cmd_set2ballOdometryRed,
+                               cmd_intakeClearDeque,
+                               cmd_nextBall,
+                               cmd_intakeAuto,
+                               frc2::WaitCommand((units::second_t).2),
+                               cmd_shooterAuto,
+                               cmd_movePreMarvinRed,
+                               cmd_intakeDisable,
+                               cmd_turretTrack,
+                               frc2::WaitCommand((units::second_t).5),
+                               cmd_intakeShoot,
+                               frc2::WaitCommand((units::second_t)0.75),
+                               cmd_intakeDisable,
+                               frc2::WaitCommand((units::second_t)0.5),
+                               cmd_intakeShoot,
+                               frc2::WaitCommand((units::second_t)0.75),
+                               cmd_intakeDisable);
 
     frc2::SequentialCommandGroup *shoot3ChezRed = new frc2::SequentialCommandGroup();
     shoot3ChezRed->AddCommands
@@ -1504,7 +1639,7 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     m_chooser.AddOption("BLUE 3 ball auto", shoot3Blue);
     m_chooser.AddOption("BLUE 5 ball auto", shoot5Blue);
 
-
+    m_choose.AddOption("RED 5 Ball Holo", shootHolo5BallRed);
     m_chooser.AddOption("RED 3 ball Chez", shoot3ChezRed);
     m_chooser.AddOption("BLUE 3 ball Chez", shoot3ChezBlue);
 
