@@ -280,8 +280,8 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
         config);
 
     std::vector<frc::Pose2d> StepBackPorkytoShootRedPointsRed;
-    StepBackPorkytoShootRedPointsRed.push_back(porkyStepBeckRed);
-    StepBackPorkytoShootRedPointsRed.push_back(porkyShootRed);
+    StepBackPorkytoShootRedPointsRed.push_back(porkyStepBackRed);
+    StepBackPorkytoShootRedPointsRed.push_back(shootRed);
 
     auto moveStepBackPorkytoShootRedRed = frc::TrajectoryGenerator::GenerateTrajectory(
         StepBackPorkytoShootRedPointsRed,
@@ -1639,7 +1639,7 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     m_chooser.AddOption("BLUE 3 ball auto", shoot3Blue);
     m_chooser.AddOption("BLUE 5 ball auto", shoot5Blue);
 
-    m_choose.AddOption("RED 5 Ball Holo", shootHolo5BallRed);
+    m_chooser.AddOption("RED 5 Ball Holo", shootHolo5BallRed);
     m_chooser.AddOption("RED 3 ball Chez", shoot3ChezRed);
     m_chooser.AddOption("BLUE 3 ball Chez", shoot3ChezBlue);
 
