@@ -35,8 +35,10 @@ struct ValorAutoAction {
 
     ValorAutoAction(std::string line, std::map<std::string, frc::Translation2d> *);
 
+public:
+    static std::vector<std::string> parseCSVLine(std::string);
+
 private:
-    std::vector<std::string> parseCSVLine(std::string);
     frc::Pose2d getPose(frc::Translation2d, double);
 };
 

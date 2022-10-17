@@ -1,6 +1,6 @@
 #include "auto/ValorAutoAction.h"
 
-std::vector<std::string> parseCSVLine(std::string line)
+std::vector<std::string> parseCSVLine(std::string line, std::string separator)
 {
     int pointerPos = 0;
     std::vector<std::string> items;
@@ -60,14 +60,16 @@ ValorAutoAction::ValorAutoAction(std::string line, std::map<std::string, frc::Tr
             error = ValorAutoAction::Error::SIZE_MISMATCH;
             return;
         }
-        auto _start = points->at(items[1]);
-        auto _end = points->at(items[3]);
-        if (start == NULL || end == NULL) {
+
+        if (points->count(items[1]) == 0 || points->count(items[3]) == 0) {
             error = ValorAutoAction::Error::POINT_MISSING;
             return;
         }
+
+        auto _start = points->at(items[1]);
+        auto _end = points->at(items[3]);
+
         start = getPose(_start, atoi(items[2].c_str()));
         end = getPose(_end, atoi(items[2].c_str()));
-=
     }
 }

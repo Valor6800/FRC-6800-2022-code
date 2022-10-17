@@ -1,5 +1,7 @@
 #include "subsystems/Drivetrain.h"
+#include "subsystems/Shooter.h"
 #include "subsystems/Feeder.h"
+#include "subsystems/Turrettracker.h"
 #include "auto/ValorAutoAction.h"
 
 #include <frc/trajectory/Trajectory.h>
@@ -8,13 +10,16 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #ifndef VALOR_AUTO_H
 #define VALOR_AUTO_H
 
 class ValorAuto {
     public:
-        ValorAuto(ValorPoints*, Drivetrain*, Feeder*);
+        ValorAuto(std::map<std::string, frc::Translation2d>*, Drivetrain*, Shooter*, Feeder*, TurretTracker*);
+        void readPointsCSV(std::string);
+        void makeAuto(std::string);
     protected:
 
         frc::Trajectory createTrajectory(std::vector<frc::Pose2d>& poses, bool reversed = false);
@@ -37,9 +42,11 @@ class ValorAuto {
                     units::angular_acceleration::radians_per_second_squared_t{SwerveConstants::AUTO_MAX_ROTATION_ACCEL_RPSS})
         };
 
-        ValorPoints *points;
+        std::map<std::string, frc::Translation2d> *points;
         Drivetrain *drivetrain;
+        Shooter *shooter;
         Feeder *feeder;
+        TurretTracker *turretTracker;
+        frc::SendableChooser<frc2::Command*> m_chooser;
 };
-
 #endif
