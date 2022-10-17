@@ -1302,27 +1302,6 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
                                frc2::WaitCommand((units::second_t)0.75),
                                cmd_intakeDisable);
 
-    frc2::SequentialCommandGroup *shoot3ChezRed = new frc2::SequentialCommandGroup();
-    shoot3ChezRed->AddCommands
-    (cmd_set2ballOdometryRed,
-    cmd_intakeClearDeque,
-    cmd_nextBall,
-    cmd_intakeAuto,
-    frc2::WaitCommand((units::second_t).2),
-    cmd_shooterAuto,
-    cmd_movePreMarvinRed,
-    cmd_intakeDisable,
-    cmd_turretTrack,
-    frc2::WaitCommand((units::second_t).5),
-    cmd_intakeShoot,
-    frc2::WaitCommand((units::second_t)0.75),
-    cmd_intakeDisable,
-    frc2::WaitCommand((units::second_t)0.5),
-    cmd_intakeShoot,
-    frc2::WaitCommand((units::second_t)0.75),
-    cmd_intakeDisable
-    );
-
     frc2::SequentialCommandGroup *shoot3ChezBlue = new frc2::SequentialCommandGroup();
     shoot3ChezBlue->AddCommands
     (cmd_set2ballOdometryRed,
