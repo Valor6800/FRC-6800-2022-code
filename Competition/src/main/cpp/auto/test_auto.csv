@@ -1,4 +1,20 @@
-trajectory,daffy,bugs,45
-trajectory,bugs,predaffy,45
-state,feeder,on
-time,3000
+set odom red
+state,flywheelState,FLYWHEEL_TRACK
+state,hoodState,HOOD_TRACK
+state,feederState,FEEDER_REGULAR_INTAKE
+wait,0.2
+trajectory,startPoseRed,bugsRed,-90
+state,feederState,FEEDER_DISABLE
+trajectory,backBugsRed,predaffyRed
+turret track
+wait,0.5
+intake shoot
+wait 1.0
+cmd_nextBall
+cmd_intakeAuto
+moveDaffyFromPredaffyRed
+wait .5
+wait .2
+cmd_intakeShoot
+wait .5
+cmd_intakeDisable

@@ -30,4 +30,4 @@ private:
     double spikedSetpoint;
 };
 
-#endif;
+#endif

@@ -9,6 +9,7 @@
 #include "Constants.h"
 #include <ctre/Phoenix.h>
 #include <vector>
+#include <unordered_map>
 
 #include <rev/CANSparkMax.h>
 #include <rev/CANEncoder.h>
@@ -41,6 +42,16 @@ public:
         LIFT_ROTATE_TOPOSITION,
         LIFT_ROTATE_ROTATEBAR
     };
+
+    std::unordered_map<std::string, LiftRotateState> liftRotateStateMap = {
+        {"LIFT_ROTATE_DISABLED", LIFT_ROTATE_DISABLED},
+        {"LIFT_ROTATE_EXTEND", LIFT_ROTATE_EXTEND},
+        {"LIFT_ROTATE_RETRACT", LIFT_ROTATE_RETRACT},
+        {"LIFT_ROTATE_TOPOSITION", LIFT_ROTATE_TOPOSITION},
+        {"LIFT_ROTATE_ROTATEBAR", LIFT_ROTATE_ROTATEBAR},
+    };
+
+    // std::map<string, LiftRotateState> liftRotateStateMap boost::map_list_of("LIFT_ROTATE_DISABLED", LIFT_ROTATE_DISABLED)("LIFT_ROTATE_EXTEND", LIFT_ROTATE_EXTEND)("LIFT_ROTATE_RETRACT", LIFT_ROTATE_RETRACT)("LIFT_ROTATE_TOPOSITION", LIFT_ROTATE_TOPOSITION)("LIFT_ROTATE_ROTATEBAR", LIFT_ROTATE_ROTATEBAR);
         
     enum LiftMainState {
         LIFT_MAIN_DISABLED,

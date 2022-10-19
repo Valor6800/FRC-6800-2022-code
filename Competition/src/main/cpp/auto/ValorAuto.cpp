@@ -1,5 +1,4 @@
 #include "auto/ValorAuto.h"
-
 #include "Constants.h"
 #include <fstream>
 #include <stdio.h>
@@ -52,6 +51,7 @@ frc::Trajectory ValorAuto::createTrajectory(std::vector<frc::Pose2d>& poses, boo
     return frc::TrajectoryGenerator::GenerateTrajectory(poses, config);
 }
 
+// read points from a csv file 
 void ValorAuto::readPointsCSV(std::string filename){
     std::ifstream infile(filename);
     if (!infile.good()){
@@ -61,6 +61,11 @@ void ValorAuto::readPointsCSV(std::string filename){
     std::string line; 
     while (std::getline(infile, line)){
         std::vector<std::string> items = ValorAutoAction::parseCSVLine(line);
+
+        // empty line
+        if (items.size() == 0)
+            continue;
+
         std::string name = items[0];
         double x = std::stod(items[1]), y = std::stod(items[2]);
         points->insert({name, frc::Translation2d((units::length::meter_t)x, (units::length::meter_t)y)});

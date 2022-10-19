@@ -1,6 +1,7 @@
 #include "auto/ValorAutoAction.h"
 
-std::vector<std::string> parseCSVLine(std::string line, std::string separator)
+// split a string by commas
+std::vector<std::string> ValorAutoAction::parseCSVLine(std::string line)
 {
     int pointerPos = 0;
     std::vector<std::string> items;
@@ -25,7 +26,6 @@ frc::Pose2d ValorAutoAction::getPose(frc::Translation2d position, double angle)
 
 ValorAutoAction::ValorAutoAction(std::string line, std::map<std::string, frc::Translation2d> * points)
 {
-    // trajectory,bugs,50,daffy,40
     std::vector<std::string> items = parseCSVLine(line);
     
     if (items.empty()) {
@@ -56,20 +56,20 @@ ValorAutoAction::ValorAutoAction(std::string line, std::map<std::string, frc::Tr
         value = items[2];
     }
     else if (type == ValorAutoAction::Type::TRAJECTORY) {
-        if (items.size() < 5) {
+        if (items.size() < 4) {
             error = ValorAutoAction::Error::SIZE_MISMATCH;
             return;
         }
 
-        if (points->count(items[1]) == 0 || points->count(items[3]) == 0) {
+        if (points->count(items[1]) == 0 || points->count(items[2]) == 0) {
             error = ValorAutoAction::Error::POINT_MISSING;
             return;
         }
 
         auto _start = points->at(items[1]);
-        auto _end = points->at(items[3]);
+        auto _end = points->at(items[2]);
 
-        start = getPose(_start, atoi(items[2].c_str()));
-        end = getPose(_end, atoi(items[2].c_str()));
+        start = getPose(_start, atoi(items[3].c_str()));
+        end = getPose(_end, atoi(items[3].c_str()));
     }
 }

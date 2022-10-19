@@ -20,7 +20,7 @@ struct ValorAutoAction {
     } type;
 
     enum Error {
-        NONE,
+        NONE_ERROR, // can't have duplicate enum names
         SIZE_MISMATCH,
         POINT_MISSING
     } error;

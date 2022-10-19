@@ -11,7 +11,7 @@
 #include <frc/smartdashboard/SendableChooser.h>
 #include <vector>
 #include "Auto.h"
-#include "ValorAuto.h"
+#include "auto/ValorAuto.h"
 #include "Constants.h"
 #include "subsystems/Drivetrain.h"
 #include "subsystems/Shooter.h"
@@ -19,7 +19,7 @@
 #include "subsystems/Lift.h"
 #include "subsystems/TurretTracker.h"
 #include "ValorGamepad.h"
-#include "auto/ValorPoints.h"
+// #include "auto/ValorPoints.h"
 
 #ifndef ROBOT_CONTAINER_H
 #define ROBOT_CONTAINER_H
@@ -39,10 +39,11 @@ class RobotContainer {
         TurretTracker m_turretTracker;
 
     private:
-        ValorPoints points;
         Auto m_auto;
         ValorAuto testAuto;
         void ConfigureButtonBindings();
+        std::map<std::string, frc::Translation2d> points;
 };
 
 #endif
+ 

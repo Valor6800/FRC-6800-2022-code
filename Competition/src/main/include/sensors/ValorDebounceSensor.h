@@ -27,4 +27,4 @@ private:
     bool isSpiked;
 };
 
-#endif;
+#endif
