@@ -7,13 +7,14 @@
 #include <iostream>
 #include <map>
 #include <functional>
+#include <vector>
+#include <wpi/ghc/filesystem.hpp>
 
 frc::TrajectoryConfig ValorAuto::config(
     units::velocity::meters_per_second_t{SwerveConstants::AUTO_MAX_SPEED_MPS},
     units::acceleration::meters_per_second_squared_t{SwerveConstants::AUTO_MAX_ACCEL_MPSS});
 
-ValorAuto::ValorAuto(std::map<std::string, frc::Translation2d> *_points, Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder, TurretTracker *_turretTracker) :
-    points(_points),
+ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder, TurretTracker *_turretTracker) :
     drivetrain(_drivetrain), 
     shooter(_shooter),
     feeder(_feeder),
@@ -57,6 +58,8 @@ void ValorAuto::readPointsCSV(std::string filename){
     if (!infile.good()){
         return;
     }
+
+    points->clear();
 
     std::string line; 
     while (std::getline(infile, line)){
@@ -121,13 +124,14 @@ Feeder::FeederState fromStringFeederEnum(const std::string& str){
         return Feeder::FeederState::FEEDER_REGULAR_INTAKE;
 }
 
-void ValorAuto::makeAuto(std::string filename){
+
+frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
+    frc2::SequentialCommandGroup *cmdGroup = new frc2::SequentialCommandGroup();
+
     std::ifstream infile(filename);
     if (!infile.good()){
-        return;
+        return cmdGroup;
     }
-
-    frc2::SequentialCommandGroup *cmdGroup = new frc2::SequentialCommandGroup();
     
     std::string line;
 
@@ -176,33 +180,61 @@ void ValorAuto::makeAuto(std::string filename){
         else if (action->type == ValorAutoAction::Type::TIME){
             cmdGroup->AddCommands(frc2::WaitCommand((units::second_t)stod(action->value)));
         }
+    }
+    return cmdGroup;
+}
 
-        std::string friendly_auto_name = "";
-        for (char c: filename){
-            if (c == '.')
-                break;
-            friendly_auto_name += c != '_' ? c : ' ';
+bool is_alpha(char c){
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+bool is_caps(char c){
+    return (c >= 'A' && c <= 'Z');
+}
+char to_lower(char c){
+    return (c >= 'A' && c <= 'Z') ? c - 'A' + 'a' : c;
+}
+char to_upper(char c){
+    return (c >= 'a' && c <= 'z') ? c - 'a' + 'A' : c;
+}
+
+std::string makeFriendlyName(std::string filename){
+    std::string n_name = "";
+    for (int i = 0; i < filename.length(); i ++){
+        if (filename[i] == '.'){
+            break;
+        } else if (filename[i] == '_'){
+            if (*(n_name.end() - 1) != ' ')
+                n_name += ' ';
+        } else if (i >= 0 && is_alpha(filename[i]) && is_caps(filename[i]) && !is_caps(filename[i - 1]) && *(n_name.end() - 1) != ' '){
+            n_name += ' ';
+            n_name += to_lower(filename[i]);
+        } else if (i == 0){
+            n_name += to_upper(filename[i]);
+        } else{
+            n_name += to_lower(filename[i]);
         }
-
-        m_chooser.AddOption(friendly_auto_name, cmdGroup);
     }
-
+    return n_name;
 }
-/*
-void ValorAuto::readAuto(std::string fileName)
-{ 
-    std::ifstream infile("/home/lvuser/autos/" + fileName + ".txt");
-    if (!infile.good())
-        return;
 
-    std::string line;
-    while(std::getline(infile, line)) {
-        int filePointer = 0;
-        int nextPointer = line.find_first_of(",", filePointer);
+// https://first.wpi.edu/wpilib/allwpilib/docs/release/cpp/classghc_1_1filesystem_1_1directory__iterator.html
+std::vector<std::string> listDirectory(std::string path_name){
+    std::vector<std::string> files;
+
+    for (auto &entry : ghc::filesystem::directory_iterator(path_name))
+        files.push_back(entry.path());
+    return files;
+}
+
+frc2::SequentialCommandGroup * ValorAuto::getCurrentAuto(){
+    readPointsCSV("test_points.csv");
+    return makeAuto(m_chooser.GetSelected());
+}
+
+void ValorAuto::fillAutoList(){
+    std::string autos_path = "/auto_csvs/";
+    std::vector<std::string> avAutos = listDirectory(autos_path);
+    for (std::string a: avAutos){
+        m_chooser.AddOption(makeFriendlyName(a), a);
     }
-    auto startPose = points->getPose(ValorPoints::LOCATIONS::START, 92);
-    auto endPose = points->getPose(ValorPoints::LOCATIONS::BUGS, 90);
-    std::vector<frc::Pose2d> poses{startPose, endPose};
-    auto command = createTrajectoryCommand(createTrajectory(poses));
 }
-*/

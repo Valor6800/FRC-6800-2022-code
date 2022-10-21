@@ -17,9 +17,11 @@
 
 class ValorAuto {
     public:
-        ValorAuto(std::map<std::string, frc::Translation2d>*, Drivetrain*, Shooter*, Feeder*, TurretTracker*);
+        ValorAuto(Drivetrain*, Shooter*, Feeder*, TurretTracker*);
         void readPointsCSV(std::string);
-        void makeAuto(std::string);
+        frc2::SequentialCommandGroup* makeAuto(std::string);
+        void fillAutoList();
+        frc2::SequentialCommandGroup* getCurrentAuto();
     protected:
 
         frc::Trajectory createTrajectory(std::vector<frc::Pose2d>& poses, bool reversed = false);
@@ -47,6 +49,6 @@ class ValorAuto {
         Shooter *shooter;
         Feeder *feeder;
         TurretTracker *turretTracker;
-        frc::SendableChooser<frc2::Command*> m_chooser;
+        frc::SendableChooser<std::string> m_chooser;
 };
 #endif
