@@ -39,8 +39,7 @@ class RobotContainer {
         TurretTracker m_turretTracker;
 
     private:
-        Auto m_auto;
-        ValorAuto testAuto;
+        ValorAuto m_auto;
         void ConfigureButtonBindings();
         std::map<std::string, frc::Translation2d> points;
 };
