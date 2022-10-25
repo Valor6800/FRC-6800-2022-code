@@ -59,19 +59,19 @@ void ValorAuto::readPointsCSV(std::string filename){
         return;
     }
 
-    points->clear();
+    points.clear();
 
     std::string line; 
     while (std::getline(infile, line)){
         std::vector<std::string> items = ValorAutoAction::parseCSVLine(line);
 
         // empty line
-        if (items.size() == 0)
+        if (items.size() < 3)
             continue;
 
         std::string name = items[0];
         double x = std::stod(items[1]), y = std::stod(items[2]);
-        points->insert({name, frc::Translation2d((units::length::meter_t)x, (units::length::meter_t)y)});
+        points[name] = frc::Translation2d((units::length::meter_t)x, (units::length::meter_t)y);
     }
 }
 
@@ -126,50 +126,57 @@ Feeder::FeederState fromStringFeederEnum(const std::string& str){
 
 
 frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
+    entry.SetString("creating command group");
     frc2::SequentialCommandGroup *cmdGroup = new frc2::SequentialCommandGroup();
+    cmdGroup->AddCommands(frc2::InstantCommand(
+            [&] {
+            drivetrain->resetOdometry(frc::Pose2d(0_m, 0_m, 0_deg));
+            }
+        )
+    );
 
     std::ifstream infile(filename);
     if (!infile.good()){
         return cmdGroup;
     }
-    
+
     std::string line;
 
     while (std::getline(infile, line)){
-        ValorAutoAction *action = new ValorAutoAction(line, points);
-        if (action->type == ValorAutoAction::Type::TRAJECTORY){
+        ValorAutoAction action(line, &points);
+        if (action.type == ValorAutoAction::Type::TRAJECTORY){
             frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
-                action->start,
+                action.start,
                 {},
-                action->end,
+                action.end,
                 config
             );
             cmdGroup->AddCommands(createTrajectoryCommand(trajectory));
         }
-        else if (action->type == ValorAutoAction::Type::STATE){
+        else if (action.type == ValorAutoAction::Type::STATE){
             std::function<void(void)> func;
             
             // make value string uppercase
             std::string value = "";
-            for (char c: action->value)
+            for (char c: action.value)
                 value += toupper(c);
 
-            if (action->state == "flywheelState"){
+            if (action.state == "flywheelState"){
                 func = [&] {
                     shooter->state.flywheelState = fromStringFlywheelEnum(value);
                 };
             }
-            else if (action->state == "turretState"){
+            else if (action.state == "turretState"){
                 func = [&] {
                     shooter->state.turretState = fromStringTurretEnum(value);
                 };
             }
-            else if (action->state == "hoodState"){
+            else if (action.state == "hoodState"){
                 func =  [&] {
                     shooter->state.hoodState = fromStringHoodEnum(value);
                 };
             }
-            else if (action->state == "feederState"){
+            else if (action.state == "feederState"){
                 func =  [&] {
                     feeder->state.feederState = fromStringFeederEnum(value);
                 };
@@ -177,8 +184,8 @@ frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
             cmdGroup->AddCommands(frc2::InstantCommand(func));
 
         }
-        else if (action->type == ValorAutoAction::Type::TIME){
-            cmdGroup->AddCommands(frc2::WaitCommand((units::second_t)stod(action->value)));
+        else if (action.type == ValorAutoAction::Type::TIME){
+            cmdGroup->AddCommands(frc2::WaitCommand((units::second_t)stod(action.value)));
         }
     }
     return cmdGroup;
@@ -198,6 +205,7 @@ char to_upper(char c){
 }
 
 std::string makeFriendlyName(std::string filename){
+    filename = filename.substr(filename.find_last_of('/') + 1);
     std::string n_name = "";
     for (int i = 0; i < filename.length(); i ++){
         if (filename[i] == '.'){
@@ -227,14 +235,19 @@ std::vector<std::string> listDirectory(std::string path_name){
 }
 
 frc2::SequentialCommandGroup * ValorAuto::getCurrentAuto(){
-    readPointsCSV("test_points.csv");
+    auto inst = nt::NetworkTableInstance::GetDefault();
+    auto table = inst.GetTable("datatable");
+    entry = table->GetEntry("log");
+    entry.SetString("reading points");
+    readPointsCSV("/home/lvuser/test_points.csv");
     return makeAuto(m_chooser.GetSelected());
 }
 
 void ValorAuto::fillAutoList(){
-    std::string autos_path = "/auto_csvs/";
+    std::string autos_path = "/home/lvuser/auto_csvs/";
     std::vector<std::string> avAutos = listDirectory(autos_path);
     for (std::string a: avAutos){
         m_chooser.AddOption(makeFriendlyName(a), a);
     }
+    frc::SmartDashboard::PutData(&m_chooser);
 }

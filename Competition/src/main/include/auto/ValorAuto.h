@@ -12,6 +12,10 @@
 #include <vector>
 #include <map>
 
+#include <networktables/NetworkTable.h>
+#include <networktables/NetworkTableInstance.h>
+#include <networktables/NetworkTableEntry.h>
+
 #ifndef VALOR_AUTO_H
 #define VALOR_AUTO_H
 
@@ -44,11 +48,13 @@ class ValorAuto {
                     units::angular_acceleration::radians_per_second_squared_t{SwerveConstants::AUTO_MAX_ROTATION_ACCEL_RPSS})
         };
 
-        std::map<std::string, frc::Translation2d> *points;
+        std::map<std::string, frc::Translation2d> points;
         Drivetrain *drivetrain;
         Shooter *shooter;
         Feeder *feeder;
         TurretTracker *turretTracker;
         frc::SendableChooser<std::string> m_chooser;
+
+        nt::NetworkTableEntry entry;
 };
 #endif

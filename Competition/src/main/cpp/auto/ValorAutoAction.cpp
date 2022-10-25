@@ -6,11 +6,11 @@ std::vector<std::string> ValorAutoAction::parseCSVLine(std::string line)
     int pointerPos = 0;
     std::vector<std::string> items;
 
-    while (pointerPos >= 0) {
+    while (pointerPos >= 0 && pointerPos < line.length()) {
         int returnPos = line.find_first_of(",", pointerPos);
-        if (returnPos > 0) {
+        if (returnPos != std::string::npos) {
             items.push_back(line.substr(pointerPos,returnPos-pointerPos));
-            pointerPos = returnPos + 2;
+            pointerPos = returnPos + 1;
         } else {
             items.push_back(line.substr(pointerPos));
             pointerPos = -1;
@@ -27,6 +27,7 @@ frc::Pose2d ValorAutoAction::getPose(frc::Translation2d position, double angle)
 ValorAutoAction::ValorAutoAction(std::string line, std::map<std::string, frc::Translation2d> * points)
 {
     std::vector<std::string> items = parseCSVLine(line);
+    error = ValorAutoAction::Error::NONE_ERROR;
     
     if (items.empty()) {
         type = ValorAutoAction::Type::NONE;
@@ -71,5 +72,11 @@ ValorAutoAction::ValorAutoAction(std::string line, std::map<std::string, frc::Tr
 
         start = getPose(_start, atoi(items[3].c_str()));
         end = getPose(_end, atoi(items[3].c_str()));
-    }
+    }/*
+    else if (type == ValorAutoAction::Type::SET_ODOM){
+        if (items.size() < 2){
+            error = ValorAutoAction::Error::SIZE_MISMATCH;
+            return;
+        }
+    }*/
 }
