@@ -42,6 +42,18 @@ public:
         FEEDER_CURRENT_INTAKE,
         FEEDER_REGULAR_INTAKE
     };
+
+    std::unordered_map<std::string, FeederState> feederStateMap = {
+        {"FEEDER_DISABLE", FEEDER_DISABLE},
+        {"FEEDER_REVERSE", FEEDER_REVERSE},
+        {"FEEDER_SHOOT", FEEDER_SHOOT},
+        {"FEEDER_CURRENT_INTAKE", FEEDER_CURRENT_INTAKE},
+        {"FEEDER_REGULAR_INTAKE", FEEDER_REGULAR_INTAKE}
+    };
+
+    FeederState stringToFeederState(std::string s){
+          return feederStateMap[s];
+    }
     
     struct x
     {

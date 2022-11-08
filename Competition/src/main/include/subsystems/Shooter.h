@@ -26,6 +26,8 @@
 #include "networktables/NetworkTable.h"
 #include <frc/livewindow/LiveWindow.h>
 
+#include <unordered_map>
+
 #ifndef SHOOTER_H
 #define SHOOTER_H
 
@@ -55,20 +57,43 @@ public:
 
      void assignTurret(double tg);
 
-    enum TurretState{
+     enum TurretState{
          TURRET_DISABLE, // Not moving
          TURRET_MANUAL, // Manual control from operator
          TURRET_HOME_MID, // In process of moving to home
          TURRET_HOME_LEFT,
          TURRET_HOME_RIGHT,
          TURRET_TRACK // Tracking via limelight
-    };
+     };
 
-    enum HoodState{
+     std::unordered_map<std::string, TurretState> turretStateMap = {
+        {"TURRET_DISABLE", TURRET_DISABLE},
+        {"TURRET_MANUAL", TURRET_MANUAL},
+        {"TURRET_HOME_MID", TURRET_HOME_MID},
+        {"TURRET_HOME_LEFT", TURRET_HOME_LEFT},
+        {"TURRET_HOME_RIGHT", TURRET_HOME_RIGHT},
+        {"TURRET_TRACK", TURRET_TRACK}
+     };
+
+     TurretState stringToTurretState(std::string s){
+          return turretStateMap[s];
+     }
+
+     enum HoodState{
          HOOD_DOWN, // Down position
          HOOD_TRACK, // Tracking using limelight
          HOOD_POOP //Low goal shot
      };
+
+     std::unordered_map<std::string, HoodState> hoodStateMap = {
+        {"HOOD_DOWN", HOOD_DOWN},
+        {"HOOD_TRACK", HOOD_TRACK},
+        {"HOOD_POOP", HOOD_POOP},
+     };
+
+     HoodState stringToHoodState(std::string s){
+          return hoodStateMap[s];
+     }
 
      enum FlywheelState{
           FLYWHEEL_DISABLE, // Not moving
@@ -76,6 +101,17 @@ public:
           FLYWHEEL_TRACK, // Dynamic calculations
           FLYWHEEL_POOP //Low goal shot
      };
+
+     std::unordered_map<std::string, FlywheelState> flywheelStateMap = {
+        {"FLYWHEEL_DISABLE", FLYWHEEL_DISABLE},
+        {"FLYWHEEL_DEFAULT", FLYWHEEL_DEFAULT},
+        {"FLYWHEEL_TRACK", FLYWHEEL_TRACK},
+        {"FLYWHEEL_POOP", FLYWHEEL_POOP},
+     };
+
+     FlywheelState stringToFlywheelState(std::string s){
+          return flywheelStateMap[s];
+     }
 
     struct x
     {

@@ -10,6 +10,8 @@
 #include <vector>
 #include <wpi/ghc/filesystem.hpp>
 
+#include <frc2/command/CommandBase.h>
+
 frc::TrajectoryConfig ValorAuto::config(
     units::velocity::meters_per_second_t{SwerveConstants::AUTO_MAX_SPEED_MPS},
     units::acceleration::meters_per_second_squared_t{SwerveConstants::AUTO_MAX_ACCEL_MPSS});
@@ -25,6 +27,18 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     // @TODO look at angle wrapping and modding
     thetaController.EnableContinuousInput(units::radian_t(-wpi::numbers::pi),
                                           units::radian_t(wpi::numbers::pi));
+}
+
+// directory_iterator doesn't exist in vanilla c++11, luckily wpilib has it in their library
+// https://first.wpi.edu/wpilib/allwpilib/docs/release/cpp/classghc_1_1filesystem_1_1directory__iterator.html
+// implementation
+// https://stackoverflow.com/questions/62409409/how-to-make-stdfilesystemdirectory-iterator-to-list-filenames-in-order
+std::vector<std::string> listDirectory(std::string path_name){
+    std::vector<std::string> files;
+
+    for (auto &entry : ghc::filesystem::directory_iterator(path_name))
+        files.push_back(entry.path());
+    return files;
 }
 
 frc2::InstantCommand ValorAuto::getSetStateFeederCommand(Feeder::FeederState feederState)
@@ -52,7 +66,17 @@ frc::Trajectory ValorAuto::createTrajectory(std::vector<frc::Pose2d>& poses, boo
     return frc::TrajectoryGenerator::GenerateTrajectory(poses, config);
 }
 
-// read points from a csv file 
+/* Read in the points from a CSV file.
+ * Each line in the CSV file must be written in the following format:
+`point_name,point_x,point_y`
+ * Example points CSV file:
+ ```Bugs,5,2.5
+    F1,8,9
+    start,0,0```
+ * Note that there are no spaces.
+ * There are no restricitions on what points must be included in the file - just
+   make sure that the points used in whatever auto you are using also exist in this CSV file.
+ */
 void ValorAuto::readPointsCSV(std::string filename){
     std::ifstream infile(filename);
     if (!infile.good()){
@@ -65,8 +89,8 @@ void ValorAuto::readPointsCSV(std::string filename){
     while (std::getline(infile, line)){
         std::vector<std::string> items = ValorAutoAction::parseCSVLine(line);
 
-        // empty line
-        if (items.size() < 3)
+        // empty or invalid line
+        if (items.size() != 3)
             continue;
 
         std::string name = items[0];
@@ -75,65 +99,15 @@ void ValorAuto::readPointsCSV(std::string filename){
     }
 }
 
-// TODO: Please figure out something better
-Shooter::FlywheelState fromStringFlywheelEnum(const std::string& str){
-    if (str == "FLYWHEEL_DISABLE")
-        return Shooter::FlywheelState::FLYWHEEL_DISABLE;
-    else if (str == "FLYWHEEL_DEFAULT")
-        return Shooter::FlywheelState::FLYWHEEL_DEFAULT;
-    else if (str == "FLYWHEEL_TRACK")
-        return Shooter::FlywheelState::FLYWHEEL_TRACK;
-    else if (str == "FLYWHEEL_POOP")
-        return Shooter::FlywheelState::FLYWHEEL_POOP;
+frc2::SequentialCommandGroup && makeRValue(frc2::SequentialCommandGroup group){
+    return group;
 }
-
-Shooter::TurretState fromStringTurretEnum(const std::string& str) {
-    if (str == "TURRET_DISABLE")
-        return Shooter::TurretState::TURRET_DISABLE;
-    else if (str == "TURRET_MANUAL")
-        return Shooter::TurretState::TURRET_MANUAL;
-    else if (str == "TURRET_HOME_MID")
-        return Shooter::TurretState::TURRET_HOME_MID;
-    else if (str == "TURRET_HOME_LEFT")
-        return Shooter::TurretState::TURRET_HOME_LEFT;
-    else if (str == "TURRET_HOME_RIGHT")
-        return Shooter::TurretState::TURRET_HOME_RIGHT;
-    else if (str == "TURRET_TRACK")
-        return Shooter::TurretState::TURRET_TRACK;
-}
-
-Shooter::HoodState fromStringHoodEnum(const std::string& str) {
-    if (str == "HOOD_DOWN")
-        return Shooter::HoodState::HOOD_DOWN;
-    else if (str == "HOOD_TRACK")
-        return Shooter::HoodState::HOOD_TRACK;
-    else if (str == "HOOD_POOP")
-        return Shooter::HoodState::HOOD_POOP;
-}
-
-Feeder::FeederState fromStringFeederEnum(const std::string& str){
-    if (str == "FEEDER_DISABLE")
-        return Feeder::FeederState::FEEDER_DISABLE;
-    else if (str == "FEEDER_REVERSE")
-        return Feeder::FeederState::FEEDER_REVERSE;
-    else if (str == "FEEDER_SHOOT")
-        return Feeder::FeederState::FEEDER_SHOOT;
-    else if (str == "FEEDER_CURRENT_INTAKE")
-        return Feeder::FeederState::FEEDER_CURRENT_INTAKE;
-    else if (str == "FEEDER_REGULAR_INTAKE")
-        return Feeder::FeederState::FEEDER_REGULAR_INTAKE;
-}
-
 
 frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
     entry.SetString("creating command group");
     frc2::SequentialCommandGroup *cmdGroup = new frc2::SequentialCommandGroup();
-    cmdGroup->AddCommands(frc2::InstantCommand(
-            [&] {
-            drivetrain->resetOdometry(frc::Pose2d(0_m, 0_m, 0_deg));
-            }
-        )
-    );
+
+    // @TODO Add a new ValorAutoAction type responsible for handling this
 
     std::ifstream infile(filename);
     if (!infile.good()){
@@ -155,40 +129,97 @@ frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
         }
         else if (action.type == ValorAutoAction::Type::STATE){
             std::function<void(void)> func;
-            
-            // make value string uppercase
-            std::string value = "";
-            for (char c: action.value)
-                value += toupper(c);
 
             if (action.state == "flywheelState"){
-                func = [&] {
-                    shooter->state.flywheelState = fromStringFlywheelEnum(value);
+                func = [&, action] {
+                    shooter->state.flywheelState = shooter->stringToFlywheelState(action.value);
                 };
             }
             else if (action.state == "turretState"){
-                func = [&] {
-                    shooter->state.turretState = fromStringTurretEnum(value);
+                func = [&, action] {
+                    shooter->state.turretState = shooter->stringToTurretState(action.value);
                 };
             }
             else if (action.state == "hoodState"){
-                func =  [&] {
-                    shooter->state.hoodState = fromStringHoodEnum(value);
+                func = [&, action] {
+                    shooter->state.hoodState = shooter->stringToHoodState(action.value);
                 };
             }
             else if (action.state == "feederState"){
-                func =  [&] {
-                    feeder->state.feederState = fromStringFeederEnum(value);
+                func = [&, action] {
+                    feeder->state.feederState = feeder->stringToFeederState(action.value);
                 };
             }
             cmdGroup->AddCommands(frc2::InstantCommand(func));
 
         }
         else if (action.type == ValorAutoAction::Type::TIME){
-            cmdGroup->AddCommands(frc2::WaitCommand((units::second_t)stod(action.value)));
+            cmdGroup->AddCommands(frc2::WaitCommand((units::millisecond_t)action.duration_ms));
+        }
+        else if (action.type == ValorAutoAction::Type::RESET_ODOM){
+            cmdGroup->AddCommands(
+                frc2::InstantCommand(
+                    [&, action] {
+                        drivetrain->resetOdometry(action.start);
+                    }
+                )
+            );
+        }
+        else if (action.type == ValorAutoAction::Type::ACTION){
+            /*
+            This doesn't work for a specific reason.
+            If you look into SequentialCommandGroup.h, you'll find the following:
+
+            SequentialCommandGroup(SequentialCommandGroup&& other) = default;
+            SequentialCommandGroup(const SequentialCommandGroup&) = delete;
+            SequentialCommandGroup(SequentialCommandGroup&) = delete;
+
+            You'll notice that functions taking in SequentialCommandGroup& are unavailable, which is exactly what we're passing in
+            However, SequeuentialCommandGroup&& is available.
+            This means that rvalue SequentialCommandGroups can be passed in.
+            rvalue are values that have no memory address.
+            Your typical values, defined by something like
+            int a = 5;
+            are lvalues. They are an object reference, as compared to an rvalue, which is just a value, not related to any object.
+            So in this scenario, if you were to access a, that would be an lvalue,
+            but if you acccessed 5, that would be an rvalue
+            rvalues are defined with
+            int&& a = 5;
+
+
+            So either you create the command group right here, or you need to find a way to convert
+            lvalues (the typical ones) to rvalues
+            */
+
+            // The issue is not with the pointers!!
+            // cmdGroup->AddCommands((*precompiledActions[action.name]));
+            frc2::SequentialCommandGroup grp{};
+            // cmdGroup->AddCommands(grp); // This doesn't compile!
+
+            // ...which is why this code works
+            
+            cmdGroup->AddCommands(frc2::SequentialCommandGroup{
+                frc2::InstantCommand(
+                    [&, action] {
+                        drivetrain->resetOdometry(frc::Pose2d(0_m, 0_m, 0_deg));
+                    }
+                )
+            });
+            
         }
     }
     return cmdGroup;
+}
+
+void ValorAuto::precompileActions(std::string path_name){
+    precompiledActions.clear();
+    std::vector<std::string> action_paths = listDirectory(path_name);
+    for (std::string action_path: action_paths){
+        frc2::SequentialCommandGroup * cmdGroup = makeAuto(action_path);
+        std::string name = action_path.substr(action_path.find_last_of('/') + 1, action_path.find_last_of('.') - action_path.find_last_of('/') - 1);
+        
+        precompiledActions[name] = (cmdGroup);
+    }
 }
 
 bool is_alpha(char c){
@@ -197,41 +228,29 @@ bool is_alpha(char c){
 bool is_caps(char c){
     return (c >= 'A' && c <= 'Z');
 }
-char to_lower(char c){
-    return (c >= 'A' && c <= 'Z') ? c - 'A' + 'a' : c;
-}
-char to_upper(char c){
-    return (c >= 'a' && c <= 'z') ? c - 'a' + 'A' : c;
-}
 
 std::string makeFriendlyName(std::string filename){
+    // take last part of the path string when divided with /'s - this should be the filename
     filename = filename.substr(filename.find_last_of('/') + 1);
     std::string n_name = "";
     for (int i = 0; i < filename.length(); i ++){
+        // .'s signify the end of the filename and the start of the file extension
         if (filename[i] == '.'){
             break;
-        } else if (filename[i] == '_'){
+        } else if (filename[i] == '_'){ // replace _'s with spaces for a snake case filename
+            // make sure we dont have double spaces
             if (*(n_name.end() - 1) != ' ')
                 n_name += ' ';
-        } else if (i >= 0 && is_alpha(filename[i]) && is_caps(filename[i]) && !is_caps(filename[i - 1]) && *(n_name.end() - 1) != ' '){
+        } else if (i >= 0 && is_alpha(filename[i]) && is_caps(filename[i]) && !is_caps(filename[i - 1]) && *(n_name.end() - 1) != ' '){ // check for camel case, add space if present
             n_name += ' ';
-            n_name += to_lower(filename[i]);
-        } else if (i == 0){
-            n_name += to_upper(filename[i]);
+            n_name += tolower(filename[i]);
+        } else if (i == 0){ // first letter should be capitaized
+            n_name += toupper(filename[i]);
         } else{
-            n_name += to_lower(filename[i]);
+            n_name += tolower(filename[i]);
         }
     }
     return n_name;
-}
-
-// https://first.wpi.edu/wpilib/allwpilib/docs/release/cpp/classghc_1_1filesystem_1_1directory__iterator.html
-std::vector<std::string> listDirectory(std::string path_name){
-    std::vector<std::string> files;
-
-    for (auto &entry : ghc::filesystem::directory_iterator(path_name))
-        files.push_back(entry.path());
-    return files;
 }
 
 frc2::SequentialCommandGroup * ValorAuto::getCurrentAuto(){
@@ -240,6 +259,8 @@ frc2::SequentialCommandGroup * ValorAuto::getCurrentAuto(){
     entry = table->GetEntry("log");
     entry.SetString("reading points");
     readPointsCSV("/home/lvuser/test_points.csv");
+    precompileActions("/home/lvuser/actions/");
+
     return makeAuto(m_chooser.GetSelected());
 }
 

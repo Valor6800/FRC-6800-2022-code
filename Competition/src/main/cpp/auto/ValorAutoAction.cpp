@@ -1,6 +1,6 @@
 #include "auto/ValorAutoAction.h"
 
-// split a string by commas
+// Split a string by commas, spaces not accounted for
 std::vector<std::string> ValorAutoAction::parseCSVLine(std::string line)
 {
     int pointerPos = 0;
@@ -38,6 +38,10 @@ ValorAutoAction::ValorAutoAction(std::string line, std::map<std::string, frc::Tr
         type = ValorAutoAction::Type::STATE;
     } else if (items[0] == "trajectory") {
         type = ValorAutoAction::Type::TRAJECTORY;
+    } else if (items[0] == "reset_odom") {
+        type = ValorAutoAction::Type::RESET_ODOM;
+    } else if (items[0] == "action"){
+        type = ValorAutoAction::Type::ACTION;
     }
 
     if (type == ValorAutoAction::Type::TIME) {
@@ -72,11 +76,20 @@ ValorAutoAction::ValorAutoAction(std::string line, std::map<std::string, frc::Tr
 
         start = getPose(_start, atoi(items[3].c_str()));
         end = getPose(_end, atoi(items[3].c_str()));
-    }/*
-    else if (type == ValorAutoAction::Type::SET_ODOM){
-        if (items.size() < 2){
+    }
+    else if (type == ValorAutoAction::Type::RESET_ODOM){
+        if (items.size() < 3){
             error = ValorAutoAction::Error::SIZE_MISMATCH;
             return;
         }
-    }*/
+        auto _start = points->at(items[1]);
+        start = getPose(_start, atoi(items[2].c_str()));
+    }
+    else if (type == ValorAutoAction::Type::ACTION){
+        if (items.size() < 2){
+            error = ValorAutoAction::Error::SIZE_MISMATCH;
+        }
+        name = items[1];
+        // Code to load commands into the action is handled in ValorAuto
+    }
 }
