@@ -98,11 +98,11 @@ void ValorAuto::readPointsCSV(std::string filename){
         points[name] = frc::Translation2d((units::length::meter_t)x, (units::length::meter_t)y);
     }
 }
-
+/*
 frc2::SequentialCommandGroup && makeRValue(frc2::SequentialCommandGroup group){
     return group;
 }
-
+*/
 frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
     entry.SetString("creating command group");
     frc2::SequentialCommandGroup *cmdGroup = new frc2::SequentialCommandGroup();
@@ -191,20 +191,24 @@ frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
             lvalues (the typical ones) to rvalues
             */
 
-            // The issue is not with the pointers!!
-            // cmdGroup->AddCommands((*precompiledActions[action.name]));
-            frc2::SequentialCommandGroup grp{};
-            // cmdGroup->AddCommands(grp); // This doesn't compile!
-
             // ...which is why this code works
             
+            /*
             cmdGroup->AddCommands(frc2::SequentialCommandGroup{
                 frc2::InstantCommand(
                     [&, action] {
                         drivetrain->resetOdometry(frc::Pose2d(0_m, 0_m, 0_deg));
                     }
                 )
-            });
+            });*/
+
+            // frc2::SequentialCommandGroup grp{};
+            // cmdGroup->AddCommands(grp); // This doesn't compile!
+            // cmdGroup->AddCommands(std::move(grp)); This does!!!!
+
+            // The issue is not with the pointers!!
+            // cmdGroup->AddCommands((*precompiledActions[action.name]));
+            cmdGroup->AddCommands(std::move(*precompiledActions[action.name]));
             
         }
     }
