@@ -16,6 +16,10 @@ frc::TrajectoryConfig ValorAuto::config(
     units::velocity::meters_per_second_t{SwerveConstants::AUTO_MAX_SPEED_MPS},
     units::acceleration::meters_per_second_squared_t{SwerveConstants::AUTO_MAX_ACCEL_MPSS});
 
+frc::TrajectoryConfig ValorAuto::reverseConfig(
+    units::velocity::meters_per_second_t{SwerveConstants::AUTO_MAX_SPEED_MPS},
+    units::acceleration::meters_per_second_squared_t{SwerveConstants::AUTO_MAX_ACCEL_MPSS});
+
 ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder, TurretTracker *_turretTracker) :
     drivetrain(_drivetrain), 
     shooter(_shooter),
@@ -23,6 +27,8 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     turretTracker(_turretTracker)
 {
     ValorAuto::config.SetKinematics(drivetrain->getKinematics());
+    ValorAuto::reverseConfig.SetKinematics(drivetrain->getKinematics());
+    ValorAuto::reverseConfig.SetReversed(true);
 
     // @TODO look at angle wrapping and modding
     thetaController.EnableContinuousInput(units::radian_t(-wpi::numbers::pi),
@@ -98,16 +104,10 @@ void ValorAuto::readPointsCSV(std::string filename){
         points[name] = frc::Translation2d((units::length::meter_t)x, (units::length::meter_t)y);
     }
 }
-/*
-frc2::SequentialCommandGroup && makeRValue(frc2::SequentialCommandGroup group){
-    return group;
-}
-*/
+
 frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
     entry.SetString("creating command group");
     frc2::SequentialCommandGroup *cmdGroup = new frc2::SequentialCommandGroup();
-
-    // @TODO Add a new ValorAutoAction type responsible for handling this
 
     std::ifstream infile(filename);
     if (!infile.good()){
@@ -116,115 +116,155 @@ frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
 
     std::string line;
 
+    // Stores trajectory poses until a non-trajectory command is run,
+    // in which case poses stored here are compiled into a single trajectory
+    // and placed into the command group, and then this is reset
+    std::vector<frc::Pose2d> trajPoses = {};
+    // bool trajReversed = false;
+
     while (std::getline(infile, line)){
         ValorAutoAction action(line, &points);
         if (action.type == ValorAutoAction::Type::TRAJECTORY){
-            frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
-                action.start,
-                {},
-                action.end,
-                config
-            );
-            cmdGroup->AddCommands(createTrajectoryCommand(trajectory));
-        }
-        else if (action.type == ValorAutoAction::Type::STATE){
-            std::function<void(void)> func;
-
-            if (action.state == "flywheelState"){
-                func = [&, action] {
-                    shooter->state.flywheelState = shooter->stringToFlywheelState(action.value);
-                };
+            if (trajPoses.size() == 0){ // starting a new trajectory, set poses inside to stored action.start and action.end
+                trajPoses = {action.start, action.end};
             }
-            else if (action.state == "turretState"){
-                func = [&, action] {
-                    shooter->state.turretState = shooter->stringToTurretState(action.value);
-                };
+            else {
+                trajPoses.push_back(action.end);
             }
-            else if (action.state == "hoodState"){
-                func = [&, action] {
-                    shooter->state.hoodState = shooter->stringToHoodState(action.value);
-                };
+        }
+        else {
+            if (trajPoses.size() != 0){
+                std::vector<frc::Translation2d> inbetweens;
+                for (uint i = 1; i < trajPoses.size() - 1; i ++)
+                    inbetweens.push_back(trajPoses[i].Translation());
+                
+                cmdGroup->AddCommands(createTrajectoryCommand(
+                    frc::TrajectoryGenerator::GenerateTrajectory(
+                        trajPoses[0], 
+                        inbetweens, 
+                        trajPoses[1],
+                        config
+                    )
+                ));
+                trajPoses = {};
             }
-            else if (action.state == "feederState"){
-                func = [&, action] {
-                    feeder->state.feederState = feeder->stringToFeederState(action.value);
-                };
+
+            if (action.type == ValorAutoAction::Type::STATE){
+                std::function<void(void)> func;
+
+                if (action.state == "flywheelState"){
+                    func = [&, action] {
+                        shooter->state.flywheelState = shooter->stringToFlywheelState(action.value);
+                    };
+                }
+                else if (action.state == "turretState"){
+                    func = [&, action] {
+                        shooter->state.turretState = shooter->stringToTurretState(action.value);
+                    };
+                }
+                else if (action.state == "hoodState"){
+                    func = [&, action] {
+                        shooter->state.hoodState = shooter->stringToHoodState(action.value);
+                    };
+                }
+                else if (action.state == "feederState"){
+                    func = [&, action] {
+                        feeder->state.feederState = feeder->stringToFeederState(action.value);
+                    };
+                }
+                cmdGroup->AddCommands(frc2::InstantCommand(func));
+
             }
-            cmdGroup->AddCommands(frc2::InstantCommand(func));
+            else if (action.type == ValorAutoAction::Type::TIME){
+                cmdGroup->AddCommands(frc2::WaitCommand((units::millisecond_t)action.duration_ms));
+            }
+            else if (action.type == ValorAutoAction::Type::RESET_ODOM){
+                cmdGroup->AddCommands(
+                    frc2::InstantCommand(
+                        [&, action] {
+                            drivetrain->resetOdometry(action.start);
+                        }
+                    )
+                );
+            }
+            else if (action.type == ValorAutoAction::Type::ACTION){
+                /*
+                This doesn't work for a specific reason.
+                If you look into SequentialCommandGroup.h, you'll find the following:
 
-        }
-        else if (action.type == ValorAutoAction::Type::TIME){
-            cmdGroup->AddCommands(frc2::WaitCommand((units::millisecond_t)action.duration_ms));
-        }
-        else if (action.type == ValorAutoAction::Type::RESET_ODOM){
-            cmdGroup->AddCommands(
-                frc2::InstantCommand(
-                    [&, action] {
-                        drivetrain->resetOdometry(action.start);
-                    }
-                )
-            );
-        }
-        else if (action.type == ValorAutoAction::Type::ACTION){
-            /*
-            This doesn't work for a specific reason.
-            If you look into SequentialCommandGroup.h, you'll find the following:
+                SequentialCommandGroup(SequentialCommandGroup&& other) = default;
+                SequentialCommandGroup(const SequentialCommandGroup&) = delete;
+                SequentialCommandGroup(SequentialCommandGroup&) = delete;
 
-            SequentialCommandGroup(SequentialCommandGroup&& other) = default;
-            SequentialCommandGroup(const SequentialCommandGroup&) = delete;
-            SequentialCommandGroup(SequentialCommandGroup&) = delete;
+                You'll notice that functions taking in SequentialCommandGroup& are unavailable, which is exactly what we're passing in
+                However, SequeuentialCommandGroup&& is available.
+                This means that rvalue SequentialCommandGroups can be passed in.
+                rvalue are values that have no memory address.
+                Your typical values, defined by something like
+                int a = 5;
+                are lvalues. They are an object reference, as compared to an rvalue, which is just a value, not related to any object.
+                So in this scenario, if you were to access a, that would be an lvalue,
+                but if you acccessed 5, that would be an rvalue
+                rvalues are defined with
+                int&& a = 5;
 
-            You'll notice that functions taking in SequentialCommandGroup& are unavailable, which is exactly what we're passing in
-            However, SequeuentialCommandGroup&& is available.
-            This means that rvalue SequentialCommandGroups can be passed in.
-            rvalue are values that have no memory address.
-            Your typical values, defined by something like
-            int a = 5;
-            are lvalues. They are an object reference, as compared to an rvalue, which is just a value, not related to any object.
-            So in this scenario, if you were to access a, that would be an lvalue,
-            but if you acccessed 5, that would be an rvalue
-            rvalues are defined with
-            int&& a = 5;
+                So either you create the command group right here, or you need to find a way to convert
+                lvalues (the typical ones) to rvalues
+                */
 
-            So either you create the command group right here, or you need to find a way to convert
-            lvalues (the typical ones) to rvalues
-            */
+                // ...which is why this code works
+                
+                /*
+                cmdGroup->AddCommands(frc2::SequentialCommandGroup{
+                    frc2::InstantCommand(
+                        [&, action] {
+                            drivetrain->resetOdometry(frc::Pose2d(0_m, 0_m, 0_deg));
+                        }
+                    )
+                });*/
 
-            // ...which is why this code works
-            
-            /*
-            cmdGroup->AddCommands(frc2::SequentialCommandGroup{
-                frc2::InstantCommand(
-                    [&, action] {
-                        drivetrain->resetOdometry(frc::Pose2d(0_m, 0_m, 0_deg));
-                    }
-                )
-            });*/
+                /*
+                frc2::SequentialCommandGroup grp{};
+                cmdGroup->AddCommands(grp); // This doesn't compile!
+                cmdGroup->AddCommands(std::move(grp)); This does!!!!
+                */
+                
 
-            /*
-            frc2::SequentialCommandGroup grp{};
-            cmdGroup->AddCommands(grp); // This doesn't compile!
-            cmdGroup->AddCommands(std::move(grp)); This does!!!!
-            */
-            
+                // The issue is not with the pointers!!
+                // cmdGroup->AddCommands((*precompiledActions[action.name]));
+                // std::move - Convert a value to an rvalue
+                cmdGroup->AddCommands(std::move(*precompiledActions[action.name]));
 
-            // The issue is not with the pointers!!
-            // cmdGroup->AddCommands((*precompiledActions[action.name]));
-            // std::move - Convert a value to an rvalue
-            cmdGroup->AddCommands(std::move(*precompiledActions[action.name]));
-
-            /*
-            C++ doesn't allow you to pass an lvalue into an rvalue reference, as that 
-            possibly unkowingly destorys it. As such, you have to knowingly destroy it
-            with std::move.
-            */
-            
-            /*
-            What confuses me about this is that the header code I showed above is for the constructor.
-            Why would passing in a command (in this case a SequentialCommandGroup) call the constructor for the cmdGroup?
-            */
+                /*
+                C++ doesn't allow you to pass an lvalue into an rvalue reference, as  
+                you may not know that that destroys it. As such, you have to knowingly destroy it
+                with std::move.
+                */
+                
+                /*
+                What confuses me about this is that the header code I showed above is for the constructor.
+                Why would passing in a command (in this case a SequentialCommandGroup) call the constructor for the cmdGroup?
+                */
+            }
         }
     }
+
+    if (trajPoses.size() != 0){
+        std::vector<frc::Translation2d> inbetweens;
+        for (uint i = 1; i < trajPoses.size() - 1; i ++)
+            inbetweens.push_back(trajPoses[i].Translation());
+        
+        cmdGroup->AddCommands(createTrajectoryCommand(
+            frc::TrajectoryGenerator::GenerateTrajectory(
+                trajPoses[0], 
+                inbetweens, 
+                trajPoses[1],
+                config
+            )
+        ));
+        trajPoses = {};
+    }
+
     return cmdGroup;
 }
 
@@ -250,7 +290,7 @@ std::string makeFriendlyName(std::string filename){
     // take last part of the path string when divided with /'s - this should be the filename
     filename = filename.substr(filename.find_last_of('/') + 1);
     std::string n_name = "";
-    for (int i = 0; i < filename.length(); i ++){
+    for (uint i = 0; i < filename.length(); i ++){
         // .'s signify the end of the filename and the start of the file extension
         if (filename[i] == '.'){
             break;
@@ -258,7 +298,7 @@ std::string makeFriendlyName(std::string filename){
             // make sure we dont have double spaces
             if (*(n_name.end() - 1) != ' ')
                 n_name += ' ';
-        } else if (i >= 0 && is_alpha(filename[i]) && is_caps(filename[i]) && !is_caps(filename[i - 1]) && *(n_name.end() - 1) != ' '){ // check for camel case, add space if present
+        } else if (i >= 1 && is_alpha(filename[i]) && is_caps(filename[i]) && !is_caps(filename[i - 1]) && *(n_name.end() - 1) != ' '){ // check for camel case, add space if present
             n_name += ' ';
             n_name += tolower(filename[i]);
         } else if (i == 0){ // first letter should be capitaized
