@@ -186,7 +186,6 @@ frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
             rvalues are defined with
             int&& a = 5;
 
-
             So either you create the command group right here, or you need to find a way to convert
             lvalues (the typical ones) to rvalues
             */
@@ -202,14 +201,28 @@ frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
                 )
             });*/
 
-            // frc2::SequentialCommandGroup grp{};
-            // cmdGroup->AddCommands(grp); // This doesn't compile!
-            // cmdGroup->AddCommands(std::move(grp)); This does!!!!
+            /*
+            frc2::SequentialCommandGroup grp{};
+            cmdGroup->AddCommands(grp); // This doesn't compile!
+            cmdGroup->AddCommands(std::move(grp)); This does!!!!
+            */
+            
 
             // The issue is not with the pointers!!
             // cmdGroup->AddCommands((*precompiledActions[action.name]));
+            // std::move - Convert a value to an rvalue
             cmdGroup->AddCommands(std::move(*precompiledActions[action.name]));
+
+            /*
+            C++ doesn't allow you to pass an lvalue into an rvalue reference, as that 
+            possibly unkowingly destorys it. As such, you have to knowingly destroy it
+            with std::move.
+            */
             
+            /*
+            What confuses me about this is that the header code I showed above is for the constructor.
+            Why would passing in a command (in this case a SequentialCommandGroup) call the constructor for the cmdGroup?
+            */
         }
     }
     return cmdGroup;
