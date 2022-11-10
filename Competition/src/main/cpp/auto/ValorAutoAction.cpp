@@ -76,6 +76,13 @@ ValorAutoAction::ValorAutoAction(std::string line, std::map<std::string, frc::Tr
 
         start = getPose(_start, atoi(items[3].c_str()));
         end = getPose(_end, atoi(items[3].c_str()));
+
+        reversed = false;
+
+        if (items.size() == 5){
+            if (items[0] == "reversed")
+                reversed = true;
+        }
     }
     else if (type == ValorAutoAction::Type::RESET_ODOM){
         if (items.size() < 3){

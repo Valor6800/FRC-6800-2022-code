@@ -16,10 +16,6 @@ frc::TrajectoryConfig ValorAuto::config(
     units::velocity::meters_per_second_t{SwerveConstants::AUTO_MAX_SPEED_MPS},
     units::acceleration::meters_per_second_squared_t{SwerveConstants::AUTO_MAX_ACCEL_MPSS});
 
-frc::TrajectoryConfig ValorAuto::reverseConfig(
-    units::velocity::meters_per_second_t{SwerveConstants::AUTO_MAX_SPEED_MPS},
-    units::acceleration::meters_per_second_squared_t{SwerveConstants::AUTO_MAX_ACCEL_MPSS});
-
 ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder, TurretTracker *_turretTracker) :
     drivetrain(_drivetrain), 
     shooter(_shooter),
@@ -27,8 +23,6 @@ ValorAuto::ValorAuto(Drivetrain *_drivetrain, Shooter *_shooter, Feeder *_feeder
     turretTracker(_turretTracker)
 {
     ValorAuto::config.SetKinematics(drivetrain->getKinematics());
-    ValorAuto::reverseConfig.SetKinematics(drivetrain->getKinematics());
-    ValorAuto::reverseConfig.SetReversed(true);
 
     // @TODO look at angle wrapping and modding
     thetaController.EnableContinuousInput(units::radian_t(-wpi::numbers::pi),
@@ -109,7 +103,7 @@ frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
     entry.SetString("creating command group");
     frc2::SequentialCommandGroup *cmdGroup = new frc2::SequentialCommandGroup();
 
-    std::ifstream infile(filename);
+    std::ifstream infile(filename); 
     if (!infile.good()){
         return cmdGroup;
     }
@@ -120,54 +114,51 @@ frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
     // in which case poses stored here are compiled into a single trajectory
     // and placed into the command group, and then this is reset
     std::vector<frc::Pose2d> trajPoses = {};
-    // bool trajReversed = false;
+    bool trajReversed = false;
 
     while (std::getline(infile, line)){
         ValorAutoAction action(line, &points);
         if (action.type == ValorAutoAction::Type::TRAJECTORY){
             if (trajPoses.size() == 0){ // starting a new trajectory, set poses inside to stored action.start and action.end
                 trajPoses = {action.start, action.end};
+                trajReversed = action.reversed;
             }
             else {
-                trajPoses.push_back(action.end);
+                // Create a new trajectory with each switch of normal <-> reversed, as they use different configs
+                if (action.reversed != trajReversed){ 
+                    cmdGroup->AddCommands(createTrajectoryCommand(createTrajectory(trajPoses, trajReversed)));
+                    trajPoses = {action.start, action.end};
+                }
+                else {
+                    trajPoses.push_back(action.end);
+                }
             }
         }
         else {
             if (trajPoses.size() != 0){
-                std::vector<frc::Translation2d> inbetweens;
-                for (uint i = 1; i < trajPoses.size() - 1; i ++)
-                    inbetweens.push_back(trajPoses[i].Translation());
-                
-                cmdGroup->AddCommands(createTrajectoryCommand(
-                    frc::TrajectoryGenerator::GenerateTrajectory(
-                        trajPoses[0], 
-                        inbetweens, 
-                        trajPoses[1],
-                        config
-                    )
-                ));
-                trajPoses = {};
+                cmdGroup->AddCommands(createTrajectoryCommand(createTrajectory(trajPoses, trajReversed)));
+                trajPoses.empty();
             }
 
             if (action.type == ValorAutoAction::Type::STATE){
                 std::function<void(void)> func;
 
-                if (action.state == "flywheelState"){
+                if (action.state == "flywheel"){
                     func = [&, action] {
                         shooter->state.flywheelState = shooter->stringToFlywheelState(action.value);
                     };
                 }
-                else if (action.state == "turretState"){
+                else if (action.state == "turret"){
                     func = [&, action] {
                         shooter->state.turretState = shooter->stringToTurretState(action.value);
                     };
                 }
-                else if (action.state == "hoodState"){
+                else if (action.state == "hood"){
                     func = [&, action] {
                         shooter->state.hoodState = shooter->stringToHoodState(action.value);
                     };
                 }
-                else if (action.state == "feederState"){
+                else if (action.state == "feeder"){
                     func = [&, action] {
                         feeder->state.feederState = feeder->stringToFeederState(action.value);
                     };
@@ -250,19 +241,8 @@ frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
     }
 
     if (trajPoses.size() != 0){
-        std::vector<frc::Translation2d> inbetweens;
-        for (uint i = 1; i < trajPoses.size() - 1; i ++)
-            inbetweens.push_back(trajPoses[i].Translation());
-        
-        cmdGroup->AddCommands(createTrajectoryCommand(
-            frc::TrajectoryGenerator::GenerateTrajectory(
-                trajPoses[0], 
-                inbetweens, 
-                trajPoses[1],
-                config
-            )
-        ));
-        trajPoses = {};
+        cmdGroup->AddCommands(createTrajectoryCommand(createTrajectory(trajPoses, trajReversed)));
+        trajPoses.empty();
     }
 
     return cmdGroup;

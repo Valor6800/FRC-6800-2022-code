@@ -48,6 +48,7 @@ class ValorAuto {
 
     private:
         static frc::TrajectoryConfig config;
+
         std::vector<ValorAutoAction> autoActions;
 
         frc::ProfiledPIDController<units::radians> thetaController{
