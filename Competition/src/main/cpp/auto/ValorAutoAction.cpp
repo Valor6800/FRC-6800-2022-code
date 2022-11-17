@@ -80,7 +80,7 @@ ValorAutoAction::ValorAutoAction(std::string line, std::map<std::string, frc::Tr
         reversed = false;
 
         if (items.size() == 5){
-            if (items[0] == "reversed")
+            if (items[4] == "reversed")
                 reversed = true;
         }
     }

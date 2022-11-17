@@ -100,7 +100,10 @@ void ValorAuto::readPointsCSV(std::string filename){
 }
 
 frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
-    entry.SetString("creating command group");
+    auto inst = nt::NetworkTableInstance::GetDefault();
+    // for debugging
+    // table->putString
+    auto table = inst.GetTable("datatable");
     frc2::SequentialCommandGroup *cmdGroup = new frc2::SequentialCommandGroup();
 
     std::ifstream infile(filename); 
@@ -127,7 +130,9 @@ frc2::SequentialCommandGroup* ValorAuto::makeAuto(std::string filename){
                 // Create a new trajectory with each switch of normal <-> reversed, as they use different configs
                 if (action.reversed != trajReversed){ 
                     cmdGroup->AddCommands(createTrajectoryCommand(createTrajectory(trajPoses, trajReversed)));
+                    trajPoses.clear();
                     trajPoses = {action.start, action.end};
+                    trajReversed = action.reversed;         
                 }
                 else {
                     trajPoses.push_back(action.end);
@@ -293,8 +298,6 @@ std::string makeFriendlyName(std::string filename){
 frc2::SequentialCommandGroup * ValorAuto::getCurrentAuto(){
     auto inst = nt::NetworkTableInstance::GetDefault();
     auto table = inst.GetTable("datatable");
-    entry = table->GetEntry("log");
-    entry.SetString("reading points");
     readPointsCSV("/home/lvuser/test_points.csv");
     precompileActions("/home/lvuser/actions/");
 
