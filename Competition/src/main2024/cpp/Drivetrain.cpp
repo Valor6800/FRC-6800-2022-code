@@ -42,8 +42,8 @@
 
 #define MOTOR_FREE_SPEED 6380.0f
 #define WHEEL_DIAMETER_M 0.0973f //0.1016
-#define DRIVE_GEAR_RATIO 5.51f
-#define AZIMUTH_GEAR_RATIO 13.37f
+#define DRIVE_GEAR_RATIO 1.0 / 5.12f // 1/8.14
+#define AZIMUTH_GEAR_RATIO  0.078125f //(15.0 / 32.0) * (10.0 / 60.0)
 #define AUTO_MAX_SPEED 10.0f
 #define AUTO_MAX_ACCEL_SECONDS 5.33f //5.33
 #define ROT_SPEED_MUL 2.0f
@@ -51,12 +51,12 @@
 #define AUTO_VISION_THRESHOLD 4.0f //meters
 #define FIELD_LENGTH 16.5f
 
-#define MODULE_DIFF 0.206375f
+#define MODULE_DIFF 0.248 //2023: 0.206375f
 
 #define X_TIME 214.85f
 
-#define MODULE_DIFF_XS {1, 1, -1, -1}
-#define MODULE_DIFF_YS {1, -1, -1, 1}
+#define MODULE_DIFF_XS {1, 1, -1, -1} //2023: {1, 1, -1, -1}
+#define MODULE_DIFF_YS {1, -1, 1, -1} //2023: {1, -1, -1, 1}
 
 #define DRIVETRAIN_CAN_BUS ""
 #define PIGEON_CAN_BUS "baseCAN"

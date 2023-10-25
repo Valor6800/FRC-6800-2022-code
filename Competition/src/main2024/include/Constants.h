@@ -6,7 +6,6 @@
 /*----------------------------------------------------------------------------*/
 
 #pragma once
-
 #include <cmath>
 #include <iostream>
 // When trying to compile against other targets for simulation, cmath doesn't include M_PI
@@ -46,8 +45,8 @@ namespace DIOPorts {
 }
 
 namespace CANIDs {
-    constexpr static int DRIVE_CANS[4] = {2, 4, 6, 8};
-    constexpr static int AZIMUTH_CANS[4] = {1, 3, 5, 7};
+    constexpr static int DRIVE_CANS[4] = {1, 3, 5, 7};
+    constexpr static int AZIMUTH_CANS[4] = {2, 4, 6, 8};
     constexpr static int PIGEON_CAN = 61;
     constexpr static int INTAKE_LEAD_CAN = 12;
     constexpr static int CARRIAGE_MAIN = 9;
