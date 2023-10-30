@@ -99,20 +99,7 @@ bool Swerve<AzimuthMotor, DriveMotor>::loadAndSetAzimuthZeroReference()
     //   are currently. The pit crew sets the wheels straight in pre-match setup. They should be close enough
     //   if the mag encoders aren't working.
     //   Protects against issues as seen in: https://www.youtube.com/watch?v=MGxpWNcv-VM
-    double currPos = getMagEncoderCount();
-    if (currPos == 0) {
-        return false;
-    }
-    double storedPos = 0.0;
-    if(wheelIdx == 0){
-        storedPos = WHEEL_0_INIT;
-    } else if(wheelIdx == 1){
-        storedPos = WHEEL_1_INIT;
-    } else if(wheelIdx == 2){
-        storedPos = WHEEL_2_INIT;
-    } else if(wheelIdx == 3){
-        storedPos = WHEEL_3_INIT;
-    }
+    
     // Get the remainder of the delta so the encoder can wrap
     azimuthMotor->setEncoderPosition(0);
     return true;
