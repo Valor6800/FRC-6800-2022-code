@@ -114,7 +114,7 @@ bool Swerve<AzimuthMotor, DriveMotor>::loadAndSetAzimuthZeroReference()
         storedPos = WHEEL_3_INIT;
     }
     // Get the remainder of the delta so the encoder can wrap
-    azimuthMotor->setEncoderPosition(currPos - storedPos);
+    azimuthMotor->setEncoderPosition(0);
     return true;
 }
 
