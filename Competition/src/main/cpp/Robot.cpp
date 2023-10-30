@@ -5,15 +5,13 @@
 
 #include <ctime>
 
-Robot::Robot() : drivetrain(this), intake(this), elevarm(this, &intake), leds(this, &elevarm, &intake, &drivetrain)
+Robot::Robot() : drivetrain(this)
 {
     frc::TimedRobot();
 }
 
 void Robot::RobotInit() {
     drivetrain.setGamepads(&gamepadOperator, &gamepadDriver);
-    elevarm.setGamepads(&gamepadOperator, &gamepadDriver);
-    intake.setGamepads(&gamepadOperator, &gamepadDriver);
 
     drivetrain.resetState();
 
@@ -45,12 +43,8 @@ void Robot::DisabledPeriodic() { }
  * RobotContainer} class.
  */
 void Robot::AutonomousInit() {
-    intake.setConeHoldSpeed(true);
     drivetrain.resetState();
-    elevarm.resetState();
-    leds.resetState();
     drivetrain.state.matchStart = frc::Timer::GetFPGATimestamp().to<double>();
-    elevarm.futureState.highStow = false;
     drivetrain.setLimelightPipeline(Drivetrain::LimelightPipes::APRIL_TAGS);
     drivetrain.setDriveMotorNeutralMode(valor::NeutralMode::Brake);
     drivetrain.pullSwerveModuleZeroReference();
@@ -58,8 +52,6 @@ void Robot::AutonomousInit() {
 
 void Robot::AutonomousExit() {
     drivetrain.state.xPose = true;
-    intake.setConeHoldSpeed(false);
-    elevarm.futureState.highStow = true;
 
 }
 
@@ -69,9 +61,6 @@ void Robot::AutonomousPeriodic() {
 void Robot::TeleopInit() {
     drivetrain.pullSwerveModuleZeroReference();
     drivetrain.setDriveMotorNeutralMode(valor::NeutralMode::Coast);
-
-    elevarm.teleopStart = frc::Timer::GetFPGATimestamp().to<double>();
-    elevarm.setArmPIDF(false);
 
     if (autoCommand != nullptr) {
         autoCommand->Cancel();

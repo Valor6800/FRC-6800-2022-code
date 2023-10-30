@@ -22,6 +22,7 @@
     "memory_resource": "cpp",
     "memory": "cpp",
     "*.inc": "cpp",
-    "cmath": "cpp"
+    "cmath": "cpp",
+    "numbers": "cpp"
   }
 }

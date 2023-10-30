@@ -96,7 +96,6 @@ Drivetrain::~Drivetrain()
 
 void Drivetrain::configSwerveModule(int i)
 {
-
    int MDX[] = MODULE_DIFF_XS;
    int MDY[] = MODULE_DIFF_YS;
 
