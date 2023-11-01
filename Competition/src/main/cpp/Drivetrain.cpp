@@ -55,8 +55,8 @@
 
 #define X_TIME 214.85f
 
-#define MODULE_DIFF_XS {1, 1, -1, -1} //2023: {1, 1, -1, -1}
-#define MODULE_DIFF_YS {1, -1, 1, -1} //2023: {1, -1, -1, 1}
+#define MODULE_DIFF_XS {1, 1, -1, -1} //{1, 1, -1, -1}
+#define MODULE_DIFF_YS {1, -1, -1, 1} //{1, -1, 1, -1} 
 
 #define DRIVETRAIN_CAN_BUS ""
 #define PIGEON_CAN_BUS "baseCAN"

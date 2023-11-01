@@ -108,7 +108,7 @@ bool Swerve<AzimuthMotor, DriveMotor>::loadAndSetAzimuthZeroReference()
 template<class AzimuthMotor, class DriveMotor>
 double Swerve<AzimuthMotor, DriveMotor>::getMagEncoderCount()
 {
-    return azimuthMotor->getAbsEncoderPosition();
+    return 0; //return azimuthMotor->getAbsEncoderPosition();
 }
 
 template<class AzimuthMotor, class DriveMotor>
