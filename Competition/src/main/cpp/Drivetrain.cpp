@@ -42,7 +42,7 @@
 
 #define MOTOR_FREE_SPEED 6380.0f
 #define WHEEL_DIAMETER_M 0.0973f //0.1016
-#define DRIVE_GEAR_RATIO 1/8.14
+#define DRIVE_GEAR_RATIO 8.14
 #define AZIMUTH_GEAR_RATIO  12.8f //(15.0 / 32.0) * (10.0 / 60.0)
 #define AUTO_MAX_SPEED 10.0f
 #define AUTO_MAX_ACCEL_SECONDS 5.33f //5.33
@@ -112,7 +112,7 @@ void Drivetrain::configSwerveModule(int i)
 
     azimuthControllers.push_back(new SwerveAzimuthMotor(CANIDs::AZIMUTH_CANS[i],
                                                       valor::NeutralMode::Brake,
-                                                      true,
+                                                      false,
                                                       DRIVETRAIN_CAN_BUS));
     azimuthControllers[i]->setConversion(1.0 / AZIMUTH_GEAR_RATIO);
     azimuthControllers[i]->setPIDF(azimuthPID, 0);
@@ -127,7 +127,7 @@ void Drivetrain::configSwerveModule(int i)
 
     driveControllers.push_back(new SwerveDriveMotor(CANIDs::DRIVE_CANS[i],
                                                     valor::NeutralMode::Coast,
-                                                    false,
+                                                    true,
                                                     DRIVETRAIN_CAN_BUS));
     driveControllers[i]->setConversion(1.0 / DRIVE_GEAR_RATIO * M_PI * WHEEL_DIAMETER_M);
     driveControllers[i]->setPIDF(drivePID, 0);
@@ -217,7 +217,7 @@ void Drivetrain::assessInputs()
         resetGyro();
     }
 
-    state.adas = driverGamepad->GetAButton();
+    state.adas = false;
     state.topTape = operatorGamepad->DPadUp();
     state.bottomTape = operatorGamepad->DPadRight();
     state.lock = state.adas || driverGamepad->GetBButton();
@@ -233,8 +233,8 @@ void Drivetrain::assessInputs()
 
 void Drivetrain::analyzeDashboard()
 {
-    if (table->GetBoolean("Load Swerve Mag Encoder",false))
-        pullSwerveModuleZeroReference();
+    // if (table->GetBoolean("Load Swerve Mag Encoder",false))
+    //     pullSwerveModuleZeroReference();
 
     estimator->UpdateWithTime(frc::Timer::GetFPGATimestamp(),
                             getPigeon(),

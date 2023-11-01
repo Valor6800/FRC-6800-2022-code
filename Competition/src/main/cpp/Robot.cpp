@@ -5,15 +5,23 @@
 
 #include <ctime>
 
-Robot::Robot() : drivetrain(this)
+Robot::Robot() : drivetrain(this), intake(this), feeder(this), shooter(this)
 {
     frc::TimedRobot();
 }
 
 void Robot::RobotInit() {
     drivetrain.setGamepads(&gamepadOperator, &gamepadDriver);
-
     drivetrain.resetState();
+
+    intake.setGamepads(&gamepadOperator, &gamepadDriver);
+    intake.resetState();
+
+    feeder.setGamepads(&gamepadOperator, &gamepadDriver);
+    feeder.resetState();
+
+    shooter.setGamepads(&gamepadOperator, &gamepadDriver);
+    shooter.resetState();
 
     frc::LiveWindow::EnableAllTelemetry();
     frc::DataLogManager::Start();
@@ -59,7 +67,7 @@ void Robot::AutonomousPeriodic() {
 }
 
 void Robot::TeleopInit() {
-    drivetrain.pullSwerveModuleZeroReference();
+    // drivetrain.pullSwerveModuleZeroReference();
     drivetrain.setDriveMotorNeutralMode(valor::NeutralMode::Coast);
 
     if (autoCommand != nullptr) {
