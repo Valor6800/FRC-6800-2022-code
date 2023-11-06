@@ -1,8 +1,8 @@
 #include <iostream>
 #include "Feeder.h"
 
-#define DEFAULT_INTAKE_SPD 0.5f
-#define DEFAULT_OUTTAKE_SPD -0.5f
+#define DEFAULT_INTAKE_SPD 0.8f
+#define DEFAULT_OUTTAKE_SPD -0.8f
 
 Feeder::Feeder(frc::TimedRobot *_robot) : valor::BaseSubsystem(_robot, "Feeder"),
     feederMotor(CANIDs::FEEDER_CAN, valor::NeutralMode::Coast, true, "")

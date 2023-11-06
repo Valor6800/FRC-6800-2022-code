@@ -220,7 +220,7 @@ void Drivetrain::assessInputs()
     state.adas = false;
     state.topTape = operatorGamepad->DPadUp();
     state.bottomTape = operatorGamepad->DPadRight();
-    state.lock = state.adas || driverGamepad->GetBButton();
+    state.lock = false;
 
     state.xSpeed = driverGamepad->leftStickY(2);
     state.ySpeed = driverGamepad->leftStickX(2);
@@ -228,7 +228,7 @@ void Drivetrain::assessInputs()
     state.rot = driverGamepad->rightStickX(3);
     }
 
-    state.xPose = driverGamepad->GetXButton();
+    state.xPose = false;
 }
 
 void Drivetrain::analyzeDashboard()

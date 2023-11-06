@@ -1,8 +1,8 @@
 #include <iostream>
 #include "Intake.h"
 
-#define DEFAULT_INTAKE_SPD 0.5f
-#define DEFAULT_OUTTAKE_SPD -0.5f
+#define DEFAULT_INTAKE_SPD 0.8f
+#define DEFAULT_OUTTAKE_SPD -0.8f
 
 Intake::Intake(frc::TimedRobot *_robot) : valor::BaseSubsystem(_robot, "Intake"),
     intakeMotor(CANIDs::INTAKE_LEAD_CAN, valor::NeutralMode::Coast, false, "")
@@ -34,9 +34,9 @@ void Intake::init()
 
 void Intake::assessInputs()
 {
-    if (driverGamepad->leftTriggerActive()) {
+    if (driverGamepad->leftTriggerActive() || driverGamepad->rightTriggerActive()) {
         state.intakeState = INTAKE;
-    } else if (driverGamepad->GetLeftBumper() || driverGamepad->rightTriggerActive()) {
+    } else if (driverGamepad->GetLeftBumper()) {
         state.intakeState = OUTTAKE;
     } else {
         state.intakeState = DISABLED;
