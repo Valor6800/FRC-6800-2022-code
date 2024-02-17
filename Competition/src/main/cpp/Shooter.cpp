@@ -5,7 +5,7 @@
 #define DEFAULT_SHOOT_SPD 0.5f
 
 Shooter::Shooter(frc::TimedRobot *_robot) : valor::BaseSubsystem(_robot, "Shooter"),
-    shooterMotor(CANIDs::SHOOTER_CAN, valor::NeutralMode::Coast, false, "baseCAN")
+    shooterMotor(CANIDs::SHOOTER_CAN, valor::NeutralMode::Coast, false, "")
 {
     frc2::CommandScheduler::GetInstance().RegisterSubsystem(this);
     init();

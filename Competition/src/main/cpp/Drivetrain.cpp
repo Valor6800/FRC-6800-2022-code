@@ -59,7 +59,7 @@
 #define MODULE_DIFF_YS {1, -1, -1, 1} //{1, -1, 1, -1} 
 
 #define DRIVETRAIN_CAN_BUS ""
-#define PIGEON_CAN_BUS "baseCAN"
+#define PIGEON_CAN_BUS ""
 
 Drivetrain::Drivetrain(frc::TimedRobot *_robot) : valor::BaseSubsystem(_robot, "Drivetrain"),
                         driveMaxSpeed(MOTOR_FREE_SPEED / 60.0 / DRIVE_GEAR_RATIO * WHEEL_DIAMETER_M * M_PI),
